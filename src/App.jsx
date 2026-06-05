@@ -503,175 +503,77 @@ function App() {
 
   // ================= RENDERS =================
   const renderLogin = () => (
-    <div className="mobile-wrapper" style={{
-      background: 'linear-gradient(180deg, #1e0f00 0%, #4a2800 100%)',
-      overflowY: 'auto',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative'
-    }}>
-      {/* Background Gold Coins & Glow */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '400px',
-        background: 'radial-gradient(circle at 50% 30%, rgba(255, 215, 0, 0.4) 0%, transparent 70%)',
-        zIndex: 0
-      }}></div>
-
-      {/* Header Back Button & Title */}
-      {authMode === 'register' && (
-        <div style={{position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', padding: '15px'}}>
-          <ChevronLeft className="icon-gold" onClick={() => setAuthMode('login')} style={{cursor: 'pointer'}} />
-          <h3 style={{flex: 1, textAlign: 'center', color: 'var(--gold-primary)', margin: 0, marginRight: 24}}>Register</h3>
-        </div>
-      )}
-
-      {/* Bonus Graphic Area */}
-      <div style={{position: 'relative', zIndex: 1, textAlign: 'center', padding: authMode === 'register' ? '10px 0 30px' : '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-        <div style={{
-          background: 'linear-gradient(to bottom, #ffe4b5, #ffb300)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          fontSize: 32, fontWeight: '900', textShadow: '0 4px 10px rgba(0,0,0,0.5)',
-          lineHeight: '1.2'
-        }}>SIGN UP<br/>BONUS</div>
-        <div style={{
-          background: 'linear-gradient(to bottom, #ff0000, #800000)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          fontSize: 64, fontWeight: '900', textShadow: '2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff, 0 10px 20px rgba(0,0,0,0.5)',
-          lineHeight: '1', marginTop: '-5px'
-        }}>₹151</div>
-      </div>
-
-      {/* White Form Card */}
-      <div style={{
-        background: '#fff',
-        borderTopLeftRadius: 30, borderTopRightRadius: 30,
-        padding: '20px 25px 40px',
-        position: 'relative', zIndex: 2,
-        flex: 1,
-        boxShadow: '0 -5px 20px rgba(0,0,0,0.3)'
-      }}>
-        {/* Language Selector */}
-        <div style={{display: 'flex', justifyContent: 'flex-end', marginBottom: 10}}>
-          <div style={{background: '#f0f0f0', color: '#333', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 20, fontSize: 12}}>
-            भाषा <Settings size={12} />
-          </div>
-        </div>
-
-        {authMode === 'login' && <h2 style={{color: '#333', textAlign: 'center', marginBottom: 30, fontSize: 22}}>Sign In</h2>}
-
-        {loginError && <p style={{color: '#ff4444', marginBottom: '15px', fontSize: 14, textAlign: 'center'}}>{loginError}</p>}
-
-        {/* Mobile Number Field */}
-        <div style={{marginBottom: 20}}>
-           <div style={{color: '#888', fontSize: 12, marginBottom: 5}}>{authMode === 'register' ? 'Mobile Number' : 'Mobile Number'}</div>
-           <div style={{display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 10}}>
-             <span style={{fontSize: 20, marginRight: 5}}>🇮🇳</span>
-             <span style={{color: '#333', fontSize: 14, marginRight: 10}}>+91</span>
-             <input type="number" placeholder="Mobile Number" style={{flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#333'}} value={mobile} onChange={e => setMobile(e.target.value)} />
-           </div>
+    <div className="mobile-wrapper" style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
+      <div className="glass-panel fade-in" style={{width: '90%', padding: '30px', textAlign: 'center'}}>
+        <img src="/logo.png" alt="ZexWin" style={{height: '50px', marginBottom: '20px'}} />
+        <h2 style={{color: 'var(--gold-primary)', marginBottom: '10px'}}>{authMode === 'login' ? 'Secure Login' : 'Register Account'}</h2>
+        
+        {loginError && <p style={{color: '#ff4444', marginBottom: '10px', fontSize: 14}}>{loginError}</p>}
+        
+        <div className="input-group" style={{display:'flex', gap: 10, marginBottom: 15}}>
+          <input type="text" value="+91" disabled className="form-input" style={{width: '60px', textAlign: 'center', padding: '12px 5px'}} />
+          <input 
+            type="number" placeholder="Mobile Number" className="form-input" style={{flex: 1}} 
+            value={mobile} onChange={e => setMobile(e.target.value)} 
+          />
         </div>
 
         {authMode === 'register' && (
-          <div style={{marginBottom: 20}}>
-             <div style={{color: '#888', fontSize: 12, marginBottom: 5}}>Verification Code</div>
-             <div style={{display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 10}}>
-               <input type="number" placeholder="6 digits" style={{flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#333'}} value={otp} onChange={e => setOtp(e.target.value)} />
-               <button onClick={sendOtp} style={{background: 'linear-gradient(180deg, #5c3500 0%, #301700 100%)', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: 15, fontSize: 12, fontWeight: 'bold', cursor: 'pointer'}} disabled={isLoading}>
-                 {isLoading ? '...' : (otpSent ? 'SENT' : 'OTP')}
-               </button>
-             </div>
+          <div className="input-group" style={{display:'flex', gap: 10, marginBottom: 15}}>
+            <input 
+              type="number" placeholder="6-digit OTP" className="form-input" style={{flex: 1, letterSpacing: '2px'}} 
+              value={otp} onChange={e => setOtp(e.target.value)} 
+            />
+            <button className="glass-btn" onClick={sendOtp} disabled={isLoading} style={{padding: '0 15px', whiteSpace: 'nowrap'}}>
+              {isLoading ? '...' : (otpSent ? 'SENT' : 'Get OTP')}
+            </button>
           </div>
         )}
 
-        {/* Password Field */}
-        <div style={{marginBottom: authMode === 'register' ? 20 : 10}}>
-           <div style={{color: '#888', fontSize: 12, marginBottom: 5}}>Password</div>
-           <div style={{display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 10}}>
-             <input type={showPassword ? "text" : "password"} placeholder="6~32 length" style={{flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#333'}} value={password} onChange={e => setPassword(e.target.value)} />
-             {showPassword ? <Eye size={18} color="#888" onClick={() => setShowPassword(false)} /> : <EyeOff size={18} color="#888" onClick={() => setShowPassword(true)} />}
-           </div>
+        <div className="input-group" style={{position: 'relative', marginBottom: 15}}>
+          <input 
+            type={showPassword ? "text" : "password"} placeholder="Password (6-32 chars)" className="form-input" style={{width: '100%', paddingRight: 40}} 
+            value={password} onChange={e => setPassword(e.target.value)} 
+          />
+          <div style={{position: 'absolute', right: 10, top: 12, cursor: 'pointer', color: '#888'}} onClick={() => setShowPassword(!showPassword)}>
+             {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+          </div>
         </div>
-
-        {authMode === 'login' && (
-           <div style={{textAlign: 'right', marginBottom: 25}}>
-              <span style={{color: '#333', fontSize: 12, cursor: 'pointer'}}>Forgot password?</span>
-           </div>
-        )}
 
         {authMode === 'register' && (
           <>
-            {/* Confirm Password */}
-            <div style={{marginBottom: 20}}>
-               <div style={{color: '#888', fontSize: 12, marginBottom: 5}}>Confirm Password</div>
-               <div style={{display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 10}}>
-                 <input type="password" placeholder="Confirm Password" style={{flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#333'}} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-               </div>
+            <div className="input-group" style={{marginBottom: 15}}>
+              <input 
+                type="password" placeholder="Confirm Password" className="form-input" style={{width: '100%'}} 
+                value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} 
+              />
             </div>
-
-            {/* Invite Code */}
-            <div style={{marginBottom: 20}}>
-               <div style={{color: '#888', fontSize: 12, marginBottom: 5}}>Invite Code</div>
-               <div style={{display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: 10}}>
-                 <input type="text" placeholder="Not required" style={{flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#333'}} value={inviteCode} onChange={e => setInviteCode(e.target.value)} />
-               </div>
+            <div className="input-group" style={{marginBottom: 20}}>
+              <input 
+                type="text" placeholder="Invite Code (Optional)" className="form-input" style={{width: '100%'}} 
+                value={inviteCode} onChange={e => setInviteCode(e.target.value)} 
+              />
             </div>
-
-            {/* Privacy Policy */}
-            <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 25}}>
-               {privacyAgreed ? <CheckCircle size={18} style={{fill: '#5c3500', color: '#fff'}} onClick={() => setPrivacyAgreed(false)}/> : <div style={{width: 16, height: 16, border: '1px solid #ccc', borderRadius: '50%'}} onClick={() => setPrivacyAgreed(true)}></div>}
-               <span style={{fontSize: 12, color: '#888'}}>I agree <span style={{color: '#cc5500'}}>Privacy Policy</span></span>
+            <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, justifyContent: 'center'}}>
+               {privacyAgreed ? <CheckCircle size={18} className="icon-gold" onClick={() => setPrivacyAgreed(false)}/> : <div style={{width: 16, height: 16, border: '1px solid #888', borderRadius: '50%'}} onClick={() => setPrivacyAgreed(true)}></div>}
+               <span style={{fontSize: 12, color: '#aaa'}}>I agree to the <span style={{color: 'var(--gold-primary)'}}>Privacy Policy</span></span>
             </div>
           </>
         )}
 
-        {/* Submit Button */}
-        <button 
-          onClick={handleAuthSubmit}
-          style={{
-            width: '100%', background: 'linear-gradient(180deg, #5c3500 0%, #301700 100%)', 
-            color: '#fff', border: 'none', padding: '15px', borderRadius: 25, 
-            fontSize: 16, fontWeight: 'bold', marginBottom: 20, cursor: 'pointer'
-          }} 
-          disabled={isLoading}
-        >
+        <button className="primary-btn-large" onClick={handleAuthSubmit} disabled={isLoading} style={{marginBottom: 15}}>
           {isLoading ? 'Processing...' : (authMode === 'login' ? 'Login' : 'Register')}
         </button>
 
-        {/* Switch Mode Link */}
-        <div style={{textAlign: 'center'}}>
+        <div style={{color: '#aaa', fontSize: 14}}>
           {authMode === 'login' ? (
-             <span style={{color: '#888', fontSize: 14}}>
-                <span onClick={() => setAuthMode('register')} style={{color: '#5c3500', cursor: 'pointer', display: 'inline-block', padding: '10px 20px', border: '1px solid #eee', borderRadius: 20}}>Register</span>
-             </span>
+            <>Don't have an account? <span style={{color: 'var(--gold-primary)', cursor: 'pointer'}} onClick={() => setAuthMode('register')}>Register Here</span></>
           ) : (
-             <span style={{color: '#888', fontSize: 14}}>
-                Already registered? <span onClick={() => setAuthMode('login')} style={{color: '#5c0000', cursor: 'pointer', fontWeight: 'bold'}}>Login</span>
-             </span>
+            <>Already registered? <span style={{color: 'var(--gold-primary)', cursor: 'pointer'}} onClick={() => setAuthMode('login')}>Login Here</span></>
           )}
         </div>
+
       </div>
-      
-      {/* Footer Area for Login mode */}
-      {authMode === 'login' && (
-         <div style={{background: '#f8f8f8', padding: '20px', textAlign: 'center'}}>
-           <div style={{background: '#e0f2fe', display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 20px', borderRadius: 20, marginBottom: 20}}>
-              <Send size={16} color="#0284c7" />
-              <span style={{color: '#0284c7', fontSize: 12, fontWeight: 'bold'}}>Official channel <span style={{color: '#ea580c'}}>daily bonus</span></span>
-           </div>
-           
-           <div style={{display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', opacity: 0.7}}>
-             <div style={{padding: '5px 10px', border: '1px solid #ccc', borderRadius: 5, fontSize: 10, color: '#d32f2f', fontWeight: 'bold'}}>bmm <span style={{color: '#333', fontWeight: 'normal'}}>testlabs</span></div>
-             <div style={{padding: '5px 10px', border: '1px solid #ccc', borderRadius: 5, fontSize: 10, color: '#0284c7', fontWeight: 'bold'}}>IBAS</div>
-             <div style={{padding: '5px 10px', border: '1px solid #ccc', borderRadius: 5, fontSize: 10, color: '#d32f2f', fontWeight: 'bold'}}>mga</div>
-             <div style={{padding: '5px 10px', border: '1px solid #ccc', borderRadius: 5, fontSize: 10, color: '#2e7d32', fontWeight: 'bold'}}>IBIA</div>
-           </div>
-           <div style={{display: 'flex', justifyContent: 'center', gap: 15, marginTop: 15}}>
-             <span style={{background: 'red', color: 'white', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 'bold'}}>18+</span>
-             <CheckCircle size={20} color="green" />
-           </div>
-         </div>
-      )}
     </div>
   );
 
