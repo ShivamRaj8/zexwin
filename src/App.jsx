@@ -55,6 +55,9 @@ function App() {
   const [balance, setBalance] = useState(0);
   const [currentRoute, setCurrentRoute] = useState('lobby'); 
   const [activeTab, setActiveTab] = useState('home'); 
+  const [walletTab, setWalletTab] = useState('deposit');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioRef = useRef(null);
   const socketRef = useRef(null);
@@ -763,18 +766,57 @@ function App() {
           <h2 className="gold-text" style={{fontSize: 32}}>₹{balance.toFixed(2)}</h2>
         </div>
 
-        <h4 className="section-title" style={{marginLeft: 15}}>Bank & Withdrawal Setup</h4>
-        <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
-          {bankDetails ? (
-            <div style={{display:'flex', flexDirection:'column', gap: 10}}>
-              <input type="text" placeholder="Bank Name" className="form-input" value={bankDetails.bank_name} onChange={e => setBankDetails({...bankDetails, bank_name: e.target.value})} />
-              <input type="text" placeholder="Account Number" className="form-input" value={bankDetails.account_number} onChange={e => setBankDetails({...bankDetails, account_number: e.target.value})} />
-              <input type="text" placeholder="IFSC Code" className="form-input" value={bankDetails.ifsc_code} onChange={e => setBankDetails({...bankDetails, ifsc_code: e.target.value})} />
-              <input type="text" placeholder="UPI ID" className="form-input" value={bankDetails.upi_id} onChange={e => setBankDetails({...bankDetails, upi_id: e.target.value})} />
-              <button className="primary-btn-large" style={{padding: 10, fontSize: 14}} onClick={saveBankDetails}>Save Bank Details</button>
-            </div>
-          ) : <p style={{textAlign: 'center', fontSize: 12}}>Loading...</p>}
+        <div style={{display:'flex', gap: 10, margin: '0 15px 20px 15px'}}>
+          <button className={walletTab === 'deposit' ? 'primary-btn-large' : 'glass-btn'} style={{flex: 1, padding: 10}} onClick={() => setWalletTab('deposit')}>Deposit</button>
+          <button className={walletTab === 'withdraw' ? 'primary-btn-large' : 'glass-btn'} style={{flex: 1, padding: 10}} onClick={() => setWalletTab('withdraw')}>Withdraw</button>
         </div>
+
+        {walletTab === 'deposit' && (
+          <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
+            <h4 className="section-title" style={{marginBottom: 15}}>Recharge Amount</h4>
+            <div style={{display: 'flex', gap: 10, marginBottom: 15, flexWrap: 'wrap'}}>
+               {[500, 1000, 2000, 5000].map(amt => (
+                 <button key={amt} className="glass-btn" style={{flex: '1 1 40%', padding: 10, border: depositAmount === amt.toString() ? '1px solid var(--gold-primary)' : ''}} onClick={() => setDepositAmount(amt.toString())}>₹{amt}</button>
+               ))}
+            </div>
+            <input type="number" placeholder="Enter Custom Amount" className="form-input" style={{marginBottom: 15}} value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
+            <button className="primary-btn-large" onClick={() => {
+              if(!depositAmount || Number(depositAmount) < 100) return alert('Minimum deposit is ₹100');
+              setBalance(prev => prev + Number(depositAmount));
+              alert(`Successfully initiated recharge of ₹${depositAmount}!`);
+              setDepositAmount('');
+            }}>Recharge Now</button>
+          </div>
+        )}
+
+        {walletTab === 'withdraw' && (
+          <>
+            <h4 className="section-title" style={{marginLeft: 15}}>Withdraw Funds</h4>
+            <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
+              <input type="number" placeholder="Enter Amount to Withdraw" className="form-input" style={{marginBottom: 15}} value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
+              <button className="primary-btn-large" onClick={() => {
+                if(!withdrawAmount || Number(withdrawAmount) < 100) return alert('Minimum withdrawal is ₹100');
+                if(Number(withdrawAmount) > balance) return alert('Insufficient balance!');
+                setBalance(prev => prev - Number(withdrawAmount));
+                alert(`Withdrawal request of ₹${withdrawAmount} submitted!`);
+                setWithdrawAmount('');
+              }}>Request Withdrawal</button>
+            </div>
+
+            <h4 className="section-title" style={{marginLeft: 15}}>Bank Setup</h4>
+            <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
+              {bankDetails ? (
+                <div style={{display:'flex', flexDirection:'column', gap: 10}}>
+                  <input type="text" placeholder="Bank Name" className="form-input" value={bankDetails.bank_name} onChange={e => setBankDetails({...bankDetails, bank_name: e.target.value})} />
+                  <input type="text" placeholder="Account Number" className="form-input" value={bankDetails.account_number} onChange={e => setBankDetails({...bankDetails, account_number: e.target.value})} />
+                  <input type="text" placeholder="IFSC Code" className="form-input" value={bankDetails.ifsc_code} onChange={e => setBankDetails({...bankDetails, ifsc_code: e.target.value})} />
+                  <input type="text" placeholder="UPI ID" className="form-input" value={bankDetails.upi_id} onChange={e => setBankDetails({...bankDetails, upi_id: e.target.value})} />
+                  <button className="primary-btn-large" style={{padding: 10, fontSize: 14}} onClick={saveBankDetails}>Save Bank Details</button>
+                </div>
+              ) : <p style={{textAlign: 'center', fontSize: 12}}>Loading...</p>}
+            </div>
+          </>
+        )}
 
         <h4 className="section-title" style={{marginLeft: 15}}>Transaction History</h4>
         <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
