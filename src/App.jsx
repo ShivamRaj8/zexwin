@@ -690,10 +690,10 @@ function App() {
 
   // === OVERLAY SCREENS ===
   const renderInviteScreen = () => (
-    <div className="profile-container fade-in">
-      <header className="top-header glass-header">
-        <div className="header-title">Invite & Earn</div>
-      </header>
+    <div className="modal-screen fade-in" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
+      <div className="modal-header" style={{padding: '20px 15px', borderBottom: '1px solid rgba(255,215,0,0.1)', display: 'flex', justifyContent: 'center'}}>
+        <h2 className="gold-text">Invite & Earn</h2>
+      </div>
 
       <div className="glass-panel" style={{margin: '20px 15px', padding: 20, textAlign: 'center'}}>
         <Share2 size={40} className="icon-gold" style={{marginBottom: 10}} />
@@ -727,10 +727,10 @@ function App() {
   );
 
   const renderQuestsScreen = () => (
-    <div className="profile-container fade-in">
-      <header className="top-header glass-header">
-        <div className="header-title">Daily Quests</div>
-      </header>
+    <div className="modal-screen fade-in" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
+      <div className="modal-header" style={{padding: '20px 15px', borderBottom: '1px solid rgba(255,215,0,0.1)', display: 'flex', justifyContent: 'center'}}>
+        <h2 className="gold-text">Daily Quests</h2>
+      </div>
 
       <div style={{margin: '20px 15px', paddingBottom: 100}}>
         <h4 className="section-title" style={{marginBottom: 15}}>Available Tasks</h4>
@@ -775,7 +775,7 @@ function App() {
   );
 
   const renderProfileScreen = () => (
-    <div className="modal-screen slide-up glass-panel" style={{overflowY: 'auto'}}>
+    <div className="modal-screen slide-up glass-panel" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
       <div className="modal-header">
         <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
         <h2>My Profile</h2>
