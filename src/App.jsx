@@ -957,7 +957,7 @@ function App() {
             style={{background: 'rgba(255,255,255,0.1)', padding: '5px 10px', borderRadius: 15, display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer'}}
             onClick={() => setShowLanguageModal(true)}
           >
-             <span style={{color: '#fff', fontSize: 12}}>भाषा</span> <Settings size={14} className="icon-gold"/>
+             <span style={{color: '#fff', fontSize: 12}}>{language === 'en' ? 'English' : 'भाषा'}</span> <Settings size={14} className="icon-gold"/>
           </div>
         </div>
 
