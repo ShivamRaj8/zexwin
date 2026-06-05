@@ -78,6 +78,10 @@ function App() {
   // Bank & Admin States
   const [bankDetails, setBankDetails] = useState(null);
   const [adminUsers, setAdminUsers] = useState([]);
+  const [adminTab, setAdminTab] = useState('users');
+  const [adminWithdrawals, setAdminWithdrawals] = useState([]);
+  const [forceMultiplier, setForceMultiplier] = useState('');
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
 
   const initAudio = () => {
     try {
@@ -324,7 +328,57 @@ function App() {
       const res = await fetch(`${API_BASE}/admin/users`, { headers: { 'Authorization': `Bearer ${token}` }});
       const data = await res.json();
       if(data.users) setAdminUsers(data.users);
+
+      const res2 = await fetch(`${API_BASE}/admin/withdrawals`, { headers: { 'Authorization': `Bearer ${token}` }});
+      const data2 = await res2.json();
+      if(data2.withdrawals) setAdminWithdrawals(data2.withdrawals);
     } catch(e) { showToast("Unauthorized"); }
+  };
+
+  const handleWithdrawalStatus = async (id, status) => {
+    setAdminActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/withdrawals/status`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ withdrawalId: id, status })
+      });
+      if(res.ok) {
+        showToast("Status updated");
+        fetchAdminData();
+      }
+    } catch(e) {}
+    setAdminActionLoading(false);
+  };
+
+  const handleBalanceUpdate = async (userId, amount) => {
+    setAdminActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/user/balance`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ userId, amount })
+      });
+      if(res.ok) {
+        showToast(`Balance ${amount > 0 ? 'added' : 'deducted'}`);
+        fetchAdminData();
+      }
+    } catch(e) {}
+    setAdminActionLoading(false);
+  };
+
+  const handleCrashForce = async () => {
+    if(!forceMultiplier) return;
+    setAdminActionLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/admin/crash-control`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ multiplier: forceMultiplier })
+      });
+      if(res.ok) {
+        showToast(`Next crash forced to ${forceMultiplier}x`);
+        setForceMultiplier('');
+      }
+    } catch(e) {}
+    setAdminActionLoading(false);
   };
 
   const logout = () => {
@@ -815,30 +869,90 @@ function App() {
     return (
       <div className="crash-game-container fade-in" style={{overflowY: 'auto'}}>
         <header className="top-header glass-header">
-          <ChevronLeft size={24} className="icon-gold" onClick={() => setCurrentRoute('lobby')} style={{cursor: 'pointer'}} />
-          <div className="header-title">Admin Dashboard</div>
+          <ChevronLeft size={24} className="icon-gold" onClick={() => setCurrentRoute('profile')} style={{cursor: 'pointer'}} />
+          <div className="header-title">Admin Control</div>
           <ShieldAlert size={20} className="icon-gold" />
         </header>
 
-        <div className="glass-panel mt-15" style={{margin: '10px'}}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 15}}>
-            <h4 className="gold-text">Registered Users</h4>
-            <button className="primary-btn-large" style={{padding: '5px 10px', width: 'auto'}} onClick={fetchAdminData}>Refresh</button>
-          </div>
-          
-          <table className="players-table" style={{fontSize: 12}}>
-            <thead><tr><th>Mobile</th><th>Balance</th><th>Bank Setup</th></tr></thead>
-            <tbody>
-              {adminUsers.map(u => (
-                <tr key={u.id}>
-                  <td>+91 {u.mobile}</td>
-                  <td className="gold-text">₹{u.balance.toFixed(2)}</td>
-                  <td>{u.account_number ? 'Yes' : 'No'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="admin-tabs" style={{display:'flex', gap:10, padding: 15}}>
+          <button className={`glass-btn ${adminTab==='users'?'active-nav':''}`} style={{flex:1}} onClick={()=>setAdminTab('users')}>Users</button>
+          <button className={`glass-btn ${adminTab==='withdrawals'?'active-nav':''}`} style={{flex:1}} onClick={()=>setAdminTab('withdrawals')}>Withdraws</button>
+          <button className={`glass-btn ${adminTab==='game'?'active-nav':''}`} style={{flex:1}} onClick={()=>setAdminTab('game')}>Game</button>
         </div>
+
+        {adminTab === 'users' && (
+          <div className="glass-panel" style={{margin: '0 10px 20px 10px'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 15}}>
+              <h4 className="gold-text">Registered Users</h4>
+              <button className="glass-btn-small" onClick={fetchAdminData}>Refresh</button>
+            </div>
+            
+            <table className="players-table" style={{fontSize: 12}}>
+              <thead><tr><th>Mobile</th><th>Balance</th><th>Action</th></tr></thead>
+              <tbody>
+                {adminUsers.map(u => (
+                  <tr key={u.id}>
+                    <td>{u.mobile}</td>
+                    <td className="gold-text">₹{u.balance.toFixed(0)}</td>
+                    <td>
+                      <div style={{display:'flex', gap: 5}}>
+                        <button className="glass-btn-small" style={{background: 'rgba(0,255,0,0.1)'}} onClick={() => handleBalanceUpdate(u.id, 500)} disabled={adminActionLoading}>+500</button>
+                        <button className="glass-btn-small" style={{background: 'rgba(255,0,0,0.1)'}} onClick={() => handleBalanceUpdate(u.id, -500)} disabled={adminActionLoading}>-500</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {adminTab === 'withdrawals' && (
+          <div className="glass-panel" style={{margin: '0 10px 20px 10px'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 15}}>
+              <h4 className="gold-text">Pending Withdrawals</h4>
+              <button className="glass-btn-small" onClick={fetchAdminData}>Refresh</button>
+            </div>
+            {adminWithdrawals.filter(w=>w.status==='pending').length === 0 && <p style={{color:'#aaa', textAlign:'center'}}>No pending requests</p>}
+            {adminWithdrawals.filter(w=>w.status==='pending').map(w => (
+              <div key={w.id} style={{background: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 8, marginBottom: 10}}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom: 5}}>
+                  <span style={{color: '#fff'}}>User: {w.mobile}</span>
+                  <span className="gold-text" style={{fontWeight:'bold'}}>₹{w.amount}</span>
+                </div>
+                <div style={{fontSize: 12, color: '#aaa', marginBottom: 10}}>
+                  A/c: {w.account_number}<br/>IFSC: {w.ifsc_code}
+                </div>
+                <div style={{display:'flex', gap: 10}}>
+                  <button className="primary-btn-large" style={{flex:1, marginTop:0, background:'#00e676'}} onClick={() => handleWithdrawalStatus(w.id, 'approved')} disabled={adminActionLoading}>Approve</button>
+                  <button className="primary-btn-large" style={{flex:1, marginTop:0, background:'#f44336'}} onClick={() => handleWithdrawalStatus(w.id, 'rejected')} disabled={adminActionLoading}>Reject</button>
+                </div>
+              </div>
+            ))}
+            
+            <h4 className="gold-text" style={{marginTop: 20, marginBottom: 10}}>History</h4>
+            {adminWithdrawals.filter(w=>w.status!=='pending').map(w => (
+              <div key={w.id} style={{display:'flex', justifyContent:'space-between', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.1)'}}>
+                <span style={{fontSize: 12}}>₹{w.amount} - {w.mobile}</span>
+                <span style={{fontSize: 12, color: w.status==='approved' ? '#00e676' : '#f44336'}}>{w.status.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {adminTab === 'game' && (
+          <div className="glass-panel" style={{margin: '0 10px 20px 10px'}}>
+            <h4 className="gold-text" style={{marginBottom: 15}}>Rig Crash Game</h4>
+            <p style={{color: '#aaa', fontSize: 14, marginBottom: 15}}>Enter a multiplier to force the NEXT round to crash exactly at that number.</p>
+            <div className="input-group" style={{display:'flex', gap: 10, marginBottom: 15}}>
+              <input type="number" step="0.01" placeholder="e.g. 1.05" className="form-input" style={{flex: 1}} value={forceMultiplier} onChange={e => setForceMultiplier(e.target.value)} />
+              <button className="primary-btn-large" style={{width: 'auto', marginTop: 0, padding: '0 20px'}} onClick={handleCrashForce} disabled={adminActionLoading}>Set Crash</button>
+            </div>
+            <div style={{background: 'rgba(255,0,0,0.1)', border: '1px solid #f44336', padding: 10, borderRadius: 8, fontSize: 12, color: '#ffaaaa'}}>
+              Warning: This completely overrides the random engine for 1 round.
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -885,12 +999,25 @@ function App() {
             <h4 className="section-title" style={{marginLeft: 15}}>Withdraw Funds</h4>
             <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
               <input type="number" placeholder="Enter Amount to Withdraw" className="form-input" style={{marginBottom: 15}} value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
-              <button className="primary-btn-large" onClick={() => {
+              <button className="primary-btn-large" onClick={async () => {
                 if(!withdrawAmount || Number(withdrawAmount) < 100) return showToast('Minimum withdrawal is ₹100');
                 if(Number(withdrawAmount) > balance) return showToast('Insufficient balance!');
-                setBalance(prev => prev - Number(withdrawAmount));
-                showToast(`Withdrawal request of ₹${withdrawAmount} submitted!`);
-                setWithdrawAmount('');
+                try {
+                  const res = await fetch(`${API_BASE}/bank/withdraw`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ amount: Number(withdrawAmount) })
+                  });
+                  const data = await res.json();
+                  if(data.success) {
+                    setBalance(prev => prev - Number(withdrawAmount));
+                    showToast(`Withdrawal request of ₹${withdrawAmount} submitted!`);
+                    setWithdrawAmount('');
+                  } else {
+                    showToast(data.error || 'Withdrawal failed');
+                  }
+                } catch(e) {
+                  showToast('Error requesting withdrawal');
+                }
               }}>Request Withdrawal</button>
             </div>
 
