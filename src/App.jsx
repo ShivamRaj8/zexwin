@@ -3,7 +3,8 @@ import { Info, Wallet, Crown, Link as LinkIcon, CalendarCheck, User, Users, Chev
 import { io } from 'socket.io-client';
 import './App.css';
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
 
 class AudioController {
   constructor() {
@@ -146,7 +147,7 @@ function App() {
     if(!token) return;
 
     if (!socketRef.current) {
-      socketRef.current = io('http://localhost:4000', {
+      socketRef.current = io(SOCKET_URL, {
         auth: { token }
       });
     }
