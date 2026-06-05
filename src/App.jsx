@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Info, Wallet, Crown, Link as LinkIcon, CalendarCheck, User, Users, ChevronLeft, CreditCard, Bitcoin, Share2, CheckCircle, Settings, LogOut, Volume2, VolumeX, Bell, Zap, Bomb, Dices, Diamond, ShieldAlert } from 'lucide-react';
+import { Info, Wallet, Crown, Link as LinkIcon, CalendarCheck, User, Users, ChevronLeft, CreditCard, Bitcoin, Share2, CheckCircle, Settings, LogOut, Volume2, VolumeX, Bell, Zap, Bomb, Dices, Diamond, ShieldAlert, HelpCircle, Radio, Award, Mail, List, Shield, Copy } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './App.css';
 
@@ -131,6 +131,17 @@ function App() {
   const [diceBetAmount, setDiceBetAmount] = useState(10);
   const [diceResult, setDiceResult] = useState(null);
 
+  const fetchUserDetails = async (currentToken) => {
+    try {
+      const res = await fetch(`${API_BASE}/user/me`, { headers: { 'Authorization': `Bearer ${currentToken}` }});
+      const data = await res.json();
+      if(data.user) {
+        setUser(data.user);
+        setBalance(data.user.balance);
+      }
+    } catch(e) {}
+  };
+
   // ================= AUTO RECONNECT IF TOKEN EXISTS =================
   useEffect(() => {
     if(token && !user) {
@@ -139,6 +150,7 @@ function App() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser({ id: payload.id, mobile: payload.mobile, role: payload.role });
         fetchBankDetails(token);
+        fetchUserDetails(token);
       } catch(e) {
         setToken(null);
         localStorage.removeItem('token');
@@ -835,33 +847,143 @@ function App() {
   );
 
   const renderProfileScreen = () => (
-    <div className="modal-screen slide-up glass-panel" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
-      <div className="modal-header">
-        <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
-        <h2>My Profile</h2>
-        <div style={{width: 24}}></div>
-      </div>
-      <div className="modal-content">
-        <div className="profile-header-card glass-btn">
-          <div className="p-avatar"><img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.mobile}`} alt="profile"/></div>
-          <div className="p-details"><h3>+91 {user?.mobile}</h3><p>ID: {user?.id} | Role: {user?.role.toUpperCase()}</p></div>
+    <div className="modal-screen fade-in" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
+      {/* Top Header Background */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1f1a0e 0%, #000000 100%)',
+        position: 'relative',
+        padding: '20px 15px 40px 15px',
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        boxShadow: '0 4px 20px rgba(255,215,0,0.1)'
+      }}>
+        {/* Header Bar */}
+        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 25}}>
+          <ChevronLeft onClick={() => setActiveTab('home')} style={{position: 'absolute', left: 15, cursor: 'pointer'}} className="icon-gold" />
+          <h2 className="gold-text" style={{fontSize: 18, margin: 0}}>My Home</h2>
+          <Bell className="icon-gold" size={20} style={{position: 'absolute', right: 20}} />
         </div>
 
-        <div className="p-menu glass-btn" style={{padding: 0, marginTop: 20}}>
-          {user?.role === 'admin' && (
-            <div className="p-menu-item" onClick={() => {setActiveTab('home'); setCurrentRoute('admin');}}>
-              <ShieldAlert size={20} className="icon-gold"/><span>Admin Dashboard</span><ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/>
+        {/* Profile Info */}
+        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 30}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}>
+            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.mobile}`} alt="avatar" style={{width: 60, height: 60, borderRadius: '50%', background: '#fff', border: '2px solid var(--gold-primary)'}} />
+            <div>
+              <h3 style={{color: '#fff', margin: '0 0 5px 0', fontSize: 18}}>{user?.mobile}</h3>
+              <div style={{background: 'linear-gradient(90deg, #ffca28, #ff8f00)', color: '#000', fontSize: 10, padding: '2px 8px', borderRadius: 10, display: 'inline-block', fontWeight: 'bold'}}>
+                VIP {user?.vip_level || 1}
+              </div>
             </div>
-          )}
-          <div className="p-menu-item" onClick={() => {setActiveTab('home'); setCurrentRoute('wallet');}}><Wallet size={20} className="icon-gold"/><span>Withdraw Funds</span><ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/></div>
-          <div className="p-menu-item" onClick={() => setSoundEnabled(!soundEnabled)}>
-            {soundEnabled ? <Volume2 size={20} className="icon-gold"/> : <VolumeX size={20} className="icon-gold"/>}
-            <span>Sound Effects {soundEnabled ? 'ON' : 'OFF'}</span>
-            <ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/>
           </div>
-          <div className="p-menu-item logout" onClick={logout}><LogOut size={20} /><span>Logout</span></div>
+          <div style={{background: 'rgba(255,255,255,0.1)', padding: '5px 10px', borderRadius: 15, display: 'flex', alignItems: 'center', gap: 5}}>
+             <span style={{color: '#fff', fontSize: 12}}>भाषा</span> <Settings size={14} className="icon-gold"/>
+          </div>
+        </div>
+
+        {/* Balances Card */}
+        <div style={{display: 'flex', background: 'rgba(0,0,0,0.6)', borderRadius: 15, padding: '15px 10px', border: '1px solid rgba(255,215,0,0.2)'}}>
+          <div style={{flex: 1, borderRight: '1px solid rgba(255,215,0,0.1)', paddingRight: 10}}>
+             <div style={{display: 'flex', alignItems: 'center', gap: 5, color: '#fff', fontSize: 12, marginBottom: 5}}>Game account <HelpCircle size={12} className="icon-gold"/></div>
+             <h2 style={{color: '#fff', fontSize: 22, margin: '0 0 10px 0'}}>₹{balance.toFixed(2)}</h2>
+             <div style={{display: 'flex', gap: 5}}>
+               <button className="glass-btn-small" style={{flex: 1, background: 'var(--gold-primary)', color: '#000', padding: '5px', fontSize: 10, borderRadius: 20}} onClick={() => {setActiveTab('home'); setWalletTab('deposit'); setCurrentRoute('wallet');}}>Recharge</button>
+               <button className="glass-btn-small" style={{flex: 1, border: '1px solid var(--gold-primary)', color: 'var(--gold-primary)', padding: '5px', fontSize: 10, borderRadius: 20}} onClick={() => {setActiveTab('home'); setWalletTab('withdraw'); setCurrentRoute('wallet');}}>Withdrawal</button>
+             </div>
+          </div>
+          <div style={{flex: 1, paddingLeft: 10}}>
+             <div style={{display: 'flex', alignItems: 'center', gap: 5, color: '#fff', fontSize: 12, marginBottom: 5}}>Agent account <HelpCircle size={12} className="icon-gold"/></div>
+             <h2 style={{color: '#fff', fontSize: 22, margin: '0 0 10px 0'}}>₹{user?.agent_balance?.toFixed(2) || '0.00'}</h2>
+             <div style={{display: 'flex', gap: 5}}>
+               <button className="glass-btn-small" style={{flex: 1, background: 'var(--gold-primary)', color: '#000', padding: '5px', fontSize: 10, borderRadius: 20}} onClick={() => showToast('Transfer functionality coming soon')}>Transfer</button>
+               <button className="glass-btn-small" style={{flex: 1, border: '1px solid var(--gold-primary)', color: 'var(--gold-primary)', padding: '5px', fontSize: 10, borderRadius: 20}} onClick={() => showToast('Agent withdrawal coming soon')}>Withdrawal</button>
+             </div>
+          </div>
         </div>
       </div>
+
+      {/* Mid Section Row */}
+      <div style={{display: 'flex', margin: '-20px 15px 20px 15px', position: 'relative', zIndex: 2, background: 'rgba(20,15,5,0.9)', borderRadius: 15, padding: 15, border: '1px solid rgba(255,215,0,0.1)', justifyContent: 'space-around'}}>
+         <div onClick={() => setActiveTab('quests')} style={{textAlign: 'center', cursor: 'pointer'}}>
+            <CalendarCheck size={30} className="icon-gold" style={{marginBottom: 5}}/>
+            <div style={{color: '#fff', fontSize: 12, fontWeight: 'bold'}}>Quests</div>
+            <div style={{color: '#888', fontSize: 10}}>Check-in &gt;</div>
+         </div>
+         <div onClick={() => {
+            navigator.clipboard.writeText(`https://zexwin.vercel.app/register?ref=${user?.invite_code || user?.mobile}`);
+            showToast('Invite code copied!');
+         }} style={{textAlign: 'center', cursor: 'pointer'}}>
+            <Share2 size={30} className="icon-gold" style={{marginBottom: 5}}/>
+            <div style={{color: '#fff', fontSize: 12, fontWeight: 'bold'}}>InviteCode</div>
+            <div style={{color: '#888', fontSize: 10, display:'flex', alignItems:'center', justifyContent:'center', gap: 2}}>{user?.invite_code || user?.mobile} <Copy size={10} /></div>
+         </div>
+      </div>
+
+      {/* Menu List */}
+      <div className="glass-panel" style={{margin: '0 15px', padding: 0, overflow: 'hidden', borderRadius: 15}}>
+        <div className="p-menu-item" onClick={() => showToast('Redirecting to Official Channel...')}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><Radio size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Official Channel</span></div>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+             <span style={{background: 'var(--gold-primary)', color: '#000', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 'bold'}}>Daily Bouns</span>
+             <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+          </div>
+        </div>
+        
+        <div className="p-menu-item" onClick={() => {setActiveTab('invite');}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><Award size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Promotion</span></div>
+          <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+        </div>
+        
+        <div className="p-menu-item" onClick={() => showToast('Envelopes coming soon!')}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><Mail size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Envelopes Center</span></div>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+             <span style={{color: '#888', fontSize: 12}}>1</span>
+             <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+          </div>
+        </div>
+
+        <div className="p-menu-item" onClick={() => {setActiveTab('home'); setWalletTab('deposit'); setCurrentRoute('wallet');}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><List size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Transactions</span></div>
+          <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+        </div>
+
+        <div className="p-menu-item" onClick={() => {setActiveTab('home'); setWalletTab('withdraw'); setCurrentRoute('wallet');}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><CreditCard size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Bank Card</span></div>
+          <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+        </div>
+
+        <div className="p-menu-item" onClick={() => showToast('USDT recharge coming soon!')}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><Shield size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Recharge USDT</span></div>
+          <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+        </div>
+        
+        <div className="p-menu-item" onClick={() => setSoundEnabled(!soundEnabled)}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}>
+            {soundEnabled ? <Volume2 size={20} className="icon-gold"/> : <VolumeX size={20} className="icon-gold"/>}
+            <span style={{color: '#fff', fontSize: 14}}>Sound Effects</span>
+          </div>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+             <span style={{color: '#888', fontSize: 12}}>{soundEnabled ? 'ON' : 'OFF'}</span>
+             <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+          </div>
+        </div>
+
+        {user?.role === 'admin' && (
+          <div className="p-menu-item" onClick={() => {setActiveTab('home'); setCurrentRoute('admin');}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 15}}><ShieldAlert size={20} className="icon-gold"/> <span style={{color: 'var(--gold-primary)', fontSize: 14, fontWeight: 'bold'}}>Admin Control Panel</span></div>
+            <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: 'var(--gold-primary)'}}/>
+          </div>
+        )}
+
+        <div className="p-menu-item" onClick={() => showToast('Support is currently offline')}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><HelpCircle size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Support Center</span></div>
+          <ChevronLeft size={16} style={{transform: 'rotate(180deg)', color: '#666'}}/>
+        </div>
+
+        <div className="p-menu-item" onClick={logout} style={{borderBottom: 'none'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15}}><LogOut size={20} style={{color: '#f44336'}}/> <span style={{color: '#f44336', fontSize: 14}}>Log Out</span></div>
+        </div>
+      </div>
+
     </div>
   );
 
