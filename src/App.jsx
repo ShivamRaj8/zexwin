@@ -689,6 +689,91 @@ function App() {
   };
 
   // === OVERLAY SCREENS ===
+  const renderInviteScreen = () => (
+    <div className="profile-container fade-in">
+      <header className="top-header glass-header">
+        <div className="header-title">Invite & Earn</div>
+      </header>
+
+      <div className="glass-panel" style={{margin: '20px 15px', padding: 20, textAlign: 'center'}}>
+        <Share2 size={40} className="icon-gold" style={{marginBottom: 10}} />
+        <h3 style={{color: '#fff', marginBottom: 10}}>Refer Friends & Earn!</h3>
+        <p style={{color: '#aaa', fontSize: 13, marginBottom: 20}}>Get 1% commission on every bet your friend places, for life!</p>
+        
+        <div style={{background: 'rgba(0,0,0,0.3)', padding: 10, borderRadius: 8, marginBottom: 15, border: '1px solid rgba(255,215,0,0.2)'}}>
+          <p style={{color: '#888', fontSize: 12, marginBottom: 5}}>Your Referral Link</p>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+             <input type="text" value={`https://zexwin.vercel.app/register?ref=${user?.mobile || '999999999'}`} readOnly className="form-input" style={{flex: 1, padding: 8, fontSize: 12}} />
+             <button className="primary-btn-large" style={{width: 'auto', padding: '8px 15px', fontSize: 12}} onClick={() => alert('Link Copied!')}>Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display: 'flex', gap: 15, margin: '0 15px 20px'}}>
+        <div className="glass-panel" style={{flex: 1, padding: 15, textAlign: 'center'}}>
+          <p style={{color: '#888', fontSize: 12}}>Total Invites</p>
+          <h2 className="gold-text" style={{fontSize: 24, marginTop: 5}}>0</h2>
+        </div>
+        <div className="glass-panel" style={{flex: 1, padding: 15, textAlign: 'center'}}>
+          <p style={{color: '#888', fontSize: 12}}>Commission</p>
+          <h2 className="gold-text" style={{fontSize: 24, marginTop: 5}}>₹0.00</h2>
+        </div>
+      </div>
+
+      <div style={{margin: '0 15px'}}>
+        <button className="primary-btn-large" onClick={() => alert('No commission to claim yet.')}>Claim Commission</button>
+      </div>
+    </div>
+  );
+
+  const renderQuestsScreen = () => (
+    <div className="profile-container fade-in">
+      <header className="top-header glass-header">
+        <div className="header-title">Daily Quests</div>
+      </header>
+
+      <div style={{margin: '20px 15px', paddingBottom: 100}}>
+        <h4 className="section-title" style={{marginBottom: 15}}>Available Tasks</h4>
+        
+        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
+          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Zap size={24} className="icon-gold" /></div>
+          <div style={{flex: 1}}>
+            <h4 style={{color: '#fff', fontSize: 14}}>Play 5 Crash Games</h4>
+            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
+               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+            </div>
+            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>0 / 5 Completed</p>
+          </div>
+          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹10</button>
+        </div>
+
+        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
+          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Crown size={24} className="icon-gold" /></div>
+          <div style={{flex: 1}}>
+            <h4 style={{color: '#fff', fontSize: 14}}>Win ₹500 in Fast Parity</h4>
+            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
+               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+            </div>
+            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>₹0 / ₹500 Completed</p>
+          </div>
+          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹50</button>
+        </div>
+
+        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
+          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Wallet size={24} className="icon-gold" /></div>
+          <div style={{flex: 1}}>
+            <h4 style={{color: '#fff', fontSize: 14}}>Deposit ₹1000</h4>
+            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
+               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+            </div>
+            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>0 / 1 Completed</p>
+          </div>
+          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹100</button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderProfileScreen = () => (
     <div className="modal-screen slide-up glass-panel" style={{overflowY: 'auto'}}>
       <div className="modal-header">
@@ -889,20 +974,8 @@ function App() {
 
       {/* Overlay Screens */}
       {activeTab === 'profile' && renderProfileScreen()}
-      {activeTab === 'invite' && (
-        <div className="modal-screen slide-up glass-panel" style={{display: 'flex', flexDirection: 'column', alignItems:'center', justifyContent:'center'}}>
-           <h2 className="gold-text">Invite & Earn</h2>
-           <p style={{color: '#888', marginTop: 10}}>Coming Soon</p>
-           <button className="primary-btn-large" style={{width: 'auto', padding: '10px 30px', marginTop: 20}} onClick={() => setActiveTab('home')}>Close</button>
-        </div>
-      )}
-      {activeTab === 'quests' && (
-        <div className="modal-screen slide-up glass-panel" style={{display: 'flex', flexDirection: 'column', alignItems:'center', justifyContent:'center'}}>
-           <h2 className="gold-text">Daily Quests</h2>
-           <p style={{color: '#888', marginTop: 10}}>Coming Soon</p>
-           <button className="primary-btn-large" style={{width: 'auto', padding: '10px 30px', marginTop: 20}} onClick={() => setActiveTab('home')}>Close</button>
-        </div>
-      )}
+      {activeTab === 'invite' && renderInviteScreen()}
+      {activeTab === 'quests' && renderQuestsScreen()}
 
       {/* Bottom Nav Bar */}
       {currentRoute === 'lobby' && (
