@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Info, Wallet, Crown, Link as LinkIcon, CalendarCheck, User, Users, ChevronLeft, CreditCard, Bitcoin, Share2, CheckCircle, Settings, LogOut, Volume2, VolumeX, Bell, Zap, Bomb, Dices, Diamond } from 'lucide-react';
+import { Info, Wallet, Crown, Link as LinkIcon, CalendarCheck, User, Users, ChevronLeft, CreditCard, Bitcoin, Share2, CheckCircle, Settings, LogOut, Volume2, VolumeX, Bell, Zap, Bomb, Dices, Diamond, ShieldAlert } from 'lucide-react';
+import { io } from 'socket.io-client';
 import './App.css';
 
-const BOT_NAMES = ['Alex99', 'HackerXx', 'CryptoKing', 'JohnD', 'Sniper007', 'WhaleBot', 'ProTrader', 'Satoshi'];
+const API_BASE = 'http://localhost:4000/api';
 
 class AudioController {
   constructor() {
@@ -49,12 +50,26 @@ class AudioController {
 }
 
 function App() {
-  const [balance, setBalance] = useState(15000.00); // Standalone prototype starting balance
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [balance, setBalance] = useState(0);
   const [currentRoute, setCurrentRoute] = useState('lobby'); 
   const [activeTab, setActiveTab] = useState('home'); 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioRef = useRef(null);
-  
+  const socketRef = useRef(null);
+
+  // Login States
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Bank & Admin States
+  const [bankDetails, setBankDetails] = useState(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+
   const initAudio = () => {
     try {
       if(!audioRef.current) {
@@ -68,86 +83,258 @@ function App() {
 
   useEffect(() => { if(audioRef.current) audioRef.current.enabled = soundEnabled; }, [soundEnabled]);
 
-  // ================= CRASH GAME ENGINE (FRONTEND ONLY) =================
+  // ================= CRASH STATES =================
   const [betAmount, setBetAmount] = useState(10);
   const [multiplier, setMultiplier] = useState(1.00);
   const [gameState, setGameState] = useState('WAITING'); 
   const [isBetPlaced, setIsBetPlaced] = useState(false);
   const [cashedOut, setCashedOut] = useState(false);
-  const [winAmount, setWinAmount] = useState(0);
-  const [history, setHistory] = useState([1.52, 3.40, 1.01, 10.45, 2.05]);
+  const [history, setHistory] = useState([]);
   const [autoCashOut, setAutoCashOut] = useState(false);
   const [autoTarget, setAutoTarget] = useState(1.10);
   const [countdown, setCountdown] = useState(5.0);
-  const [bots, setBots] = useState([]);
   const [parachutes, setParachutes] = useState([]);
   const [floatingTexts, setFloatingTexts] = useState([]);
-  const [crashPoint, setCrashPoint] = useState(0);
-  const startTimeRef = useRef(0);
-  const gameLoopRef = useRef(null);
+  const multiplierRef = useRef(1.00);
 
+  // ================= PARITY STATES =================
+  const [parityTimer, setParityTimer] = useState(30);
+  const [parityBetAmount, setParityBetAmount] = useState(10);
+  const [paritySelected, setParitySelected] = useState(null);
+  const [parityUserBet, setParityUserBet] = useState(null);
+  const [parityResultColor, setParityResultColor] = useState(null);
+  const [parityHistory, setParityHistory] = useState([]);
+
+  // ================= MINES STATES =================
+  const [minesGrid, setMinesGrid] = useState(Array(25).fill({ revealed: false, isMine: false }));
+  const [minesActive, setMinesActive] = useState(false);
+  const [minesCount, setMinesCount] = useState(3);
+  const [minesBetAmount, setMinesBetAmount] = useState(10);
+  const [minesMultiplier, setMinesMultiplier] = useState(1.0);
+
+  // ================= DICE STATES =================
+  const [diceTarget, setDiceTarget] = useState(50);
+  const [diceMode, setDiceMode] = useState('under'); 
+  const [diceBetAmount, setDiceBetAmount] = useState(10);
+  const [diceResult, setDiceResult] = useState(null);
+
+  // ================= AUTO RECONNECT IF TOKEN EXISTS =================
   useEffect(() => {
-    if (gameState === 'WAITING') {
-      let currentCount = 5.0;
-      gameLoopRef.current = setInterval(() => {
-        currentCount -= 0.1;
-        setCountdown(Math.max(0, currentCount));
-        if (currentCount <= 0) {
-          clearInterval(gameLoopRef.current);
-          startCrashFlight();
-        }
-      }, 100);
-    }
-    return () => clearInterval(gameLoopRef.current);
-  }, [gameState]);
-
-  const startCrashFlight = () => {
-    const r = Math.random();
-    const newCrashPoint = r < 0.03 ? 1.00 : Math.max(1.00, 0.99 / (1 - r));
-    setCrashPoint(newCrashPoint);
-    setGameState('PLAYING');
-    startTimeRef.current = Date.now();
-    setMultiplier(1.00);
-    setParachutes([]);
-    setFloatingTexts([]);
-
-    gameLoopRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      const currentMult = Math.pow(Math.E, 0.08 * elapsed);
-      setMultiplier(currentMult);
-      
-      if(audioRef.current && currentMult > 1.05) audioRef.current.playTick();
-
-      if (currentMult >= newCrashPoint) {
-        clearInterval(gameLoopRef.current);
-        handleCrashEnd(newCrashPoint);
+    if(token && !user) {
+      // Decode JWT locally just to get basic info quickly, or rely on socket connection
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({ id: payload.id, mobile: payload.mobile, role: payload.role });
+        fetchBankDetails(token);
+      } catch(e) {
+        setToken(null);
+        localStorage.removeItem('token');
       }
-    }, 50);
+    }
+  }, [token, user]);
+
+  // ================= SOCKET LOGIC =================
+  useEffect(() => {
+    if(!token) return;
+
+    if (!socketRef.current) {
+      socketRef.current = io('http://localhost:4000', {
+        auth: { token }
+      });
+    }
+    const socket = socketRef.current;
+
+    socket.on('connect_error', (err) => {
+      console.error("Socket Error:", err);
+      if(err.message === 'Authentication error') {
+        logout();
+      }
+    });
+
+    socket.on('balance_update', (newBal) => setBalance(newBal));
+
+    // --- Crash Game ---
+    socket.on('crash_sync', (data) => {
+      setGameState(data.gameState); setMultiplier(data.multiplier);
+      setCountdown(data.countdown); setHistory(data.history);
+      multiplierRef.current = data.multiplier;
+    });
+
+    socket.on('crash_tick', (data) => {
+      setGameState(data.gameState); setMultiplier(data.multiplier);
+      setCountdown(data.countdown); multiplierRef.current = data.multiplier;
+      if (data.gameState === 'PLAYING') {
+        if(audioRef.current && data.multiplier > 1.05) audioRef.current.playTick();
+        if (isBetPlaced && !cashedOut && autoCashOut && data.multiplier >= autoTarget) {
+          handleCrashCashOut();
+        }
+      }
+    });
+
+    socket.on('crash_started', () => {
+      setParachutes([]); setFloatingTexts([]); setIsBetPlaced(isBetPlaced); 
+    });
+
+    socket.on('crash_crashed', (data) => {
+      if(audioRef.current) audioRef.current.playCrash();
+      setHistory(data.history);
+      setIsBetPlaced(false);
+      setTimeout(() => { setCashedOut(false); }, 3000);
+    });
+
+    socket.on('crash_cashout_success', (data) => {
+      setCashedOut(true);
+      if(audioRef.current) audioRef.current.playCashout();
+      const mult = data.multiplier;
+      const currentX = Math.min(80, 10 + (mult * 5)); const currentY = Math.min(80, 10 + (mult * 3));
+      setParachutes(prev => [...prev, { id: 'player-cashout', name: 'You', x: currentX, y: currentY }]);
+      const tid = 'txt-player-cashout-' + Date.now();
+      setFloatingTexts(prev => [...prev, { id: tid, text: `+₹${data.winAmount.toFixed(2)}`, x: currentX, y: currentY, isPlayer: true }]);
+      setTimeout(() => { setFloatingTexts(prev => prev.filter(t => t.id !== tid)); }, 1500);
+    });
+
+    // --- Parity Game ---
+    socket.on('parity_tick', (data) => {
+      setParityTimer(data.countdown);
+      if(data.history) setParityHistory(data.history);
+    });
+
+    socket.on('parity_result', (data) => {
+      setParityResultColor(data.result);
+      if(audioRef.current) audioRef.current.playTick();
+      if(parityUserBet && parityUserBet.color !== data.result) {
+        if(audioRef.current) audioRef.current.playCrash();
+      }
+      setTimeout(() => { setParityResultColor(null); setParityUserBet(null); }, 3000);
+    });
+
+    socket.on('parity_win', (data) => {
+      if(audioRef.current) audioRef.current.playCashout();
+    });
+
+    // --- Mines Game ---
+    socket.on('mines_started', () => {
+      setMinesGrid(Array(25).fill({ revealed: false, isMine: false }));
+      setMinesMultiplier(1.0);
+      setMinesActive(true);
+    });
+
+    socket.on('mines_safe', (data) => {
+      if(audioRef.current) audioRef.current.playTick();
+      setMinesGrid(prev => { let n = [...prev]; n[data.index] = { revealed: true, isMine: false }; return n; });
+      setMinesMultiplier(data.multiplier);
+    });
+
+    socket.on('mines_game_over', (data) => {
+      setMinesActive(false);
+      if(audioRef.current) audioRef.current.playCrash();
+      setMinesGrid(data.bombs.map(b => ({ revealed: true, isMine: b })));
+    });
+
+    socket.on('mines_cashout_success', (data) => {
+      setMinesActive(false);
+      if(audioRef.current) audioRef.current.playCashout();
+      setMinesGrid(data.bombs.map((b, i) => ({ revealed: true, isMine: b || minesGrid[i].revealed })));
+    });
+
+    // --- Dice Game ---
+    socket.on('dice_result', (data) => {
+      setDiceResult(data.roll);
+      if(data.win) {
+        if(audioRef.current) audioRef.current.playCashout();
+      } else {
+        if(audioRef.current) audioRef.current.playCrash();
+      }
+    });
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [token]);
+
+
+  // ================= API CALLS =================
+  const sendOtp = async () => {
+    setLoginError('');
+    if(mobile.length < 10) return setLoginError("Enter 10 digit mobile number");
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-otp`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mobile})
+      });
+      const data = await res.json();
+      if(data.success) setOtpSent(true);
+      else setLoginError(data.error);
+    } catch(e) { setLoginError("Server unreachable"); }
+    setIsLoading(false);
   };
 
-  const handleCrashEnd = (finalMult) => {
-    setGameState('CRASHED');
-    setMultiplier(finalMult);
-    setHistory(prev => [finalMult, ...prev].slice(0, 15));
-    if(audioRef.current) audioRef.current.playCrash();
-    
-    // If player didn't cash out, they lose
-    setIsBetPlaced(false);
-    
-    setTimeout(() => {
-      setGameState('WAITING');
-      setCountdown(5.0);
-      setMultiplier(1.00);
-      setCashedOut(false);
-      setWinAmount(0);
-    }, 3000);
+  const verifyOtp = async () => {
+    setLoginError('');
+    if(!otp) return setLoginError("Enter OTP");
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mobile, otp})
+      });
+      const data = await res.json();
+      if(data.success) {
+        setToken(data.token);
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        setBalance(data.user.balance);
+        fetchBankDetails(data.token);
+        setCurrentRoute('lobby');
+      } else { setLoginError(data.error); }
+    } catch(e) { setLoginError("Server unreachable"); }
+    setIsLoading(false);
   };
 
+  const fetchBankDetails = async (currentToken) => {
+    try {
+      const res = await fetch(`${API_BASE}/bank`, { headers: { 'Authorization': `Bearer ${currentToken}` }});
+      const data = await res.json();
+      setBankDetails(data.bankDetails || { account_number: '', ifsc_code: '', bank_name: '', upi_id: '' });
+    } catch(e) {}
+  };
+
+  const saveBankDetails = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/bank`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(bankDetails)
+      });
+      if(res.ok) alert("Bank details saved securely!");
+    } catch(e) { alert("Failed to save bank details"); }
+  };
+
+  const fetchAdminData = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/users`, { headers: { 'Authorization': `Bearer ${token}` }});
+      const data = await res.json();
+      if(data.users) setAdminUsers(data.users);
+    } catch(e) { alert("Unauthorized"); }
+  };
+
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    setCurrentRoute('lobby');
+    setOtpSent(false);
+    setMobile('');
+    setOtp('');
+  };
+
+
+  // ================= ACTION HANDLERS =================
   const handleCrashAction = () => {
     initAudio();
     if (gameState === 'WAITING' && !isBetPlaced) {
       if (balance >= betAmount && betAmount > 0) {
-        setBalance(b => b - betAmount);
+        socketRef.current.emit('crash_place_bet', { amount: betAmount });
         setIsBetPlaced(true);
       }
     } else if (gameState === 'PLAYING' && isBetPlaced && !cashedOut) {
@@ -156,175 +343,39 @@ function App() {
   };
 
   const handleCrashCashOut = () => {
-    if(!isBetPlaced || cashedOut || gameState !== 'PLAYING') return;
-    const currentMult = multiplier;
-    const win = betAmount * currentMult;
-    setCashedOut(true);
-    setWinAmount(win);
-    setBalance(b => b + win);
-    if(audioRef.current) audioRef.current.playCashout();
-    
-    const x = Math.min(80, 10 + (currentMult * 5)); const y = Math.min(80, 10 + (currentMult * 3));
-    setParachutes(prev => [...prev, { id: 'player', name: 'You', x, y }]);
-    const tid = 'txt-player-' + Date.now();
-    setFloatingTexts(prev => [...prev, { id: tid, text: `+₹${win.toFixed(2)}`, x, y, isPlayer: true }]);
-    setTimeout(() => { setFloatingTexts(prev => prev.filter(t => t.id !== tid)); }, 1500);
-  };
-
-  // Auto cashout listener
-  useEffect(() => {
-    if (gameState === 'PLAYING' && isBetPlaced && !cashedOut && autoCashOut && multiplier >= autoTarget) {
-      handleCrashCashOut();
-    }
-  }, [multiplier, gameState, isBetPlaced, cashedOut, autoCashOut, autoTarget]);
-
-
-  // ================= PARITY GAME ENGINE =================
-  const [parityTimer, setParityTimer] = useState(30);
-  const [parityBetAmount, setParityBetAmount] = useState(10);
-  const [paritySelected, setParitySelected] = useState(null);
-  const [parityUserBet, setParityUserBet] = useState(null);
-  const [parityResultColor, setParityResultColor] = useState(null);
-  const [parityHistory, setParityHistory] = useState(['red', 'green', 'red', 'red', 'violet']);
-  const parityLoopRef = useRef(null);
-
-  useEffect(() => {
-    parityLoopRef.current = setInterval(() => {
-      setParityTimer(prev => {
-        if(prev <= 1) {
-          generateParityResult();
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(parityLoopRef.current);
-  }, []);
-
-  const generateParityResult = () => {
-    const r = Math.random();
-    let res = 'red';
-    if(r > 0.45 && r <= 0.9) res = 'green';
-    else if(r > 0.9) res = 'violet';
-    
-    setParityResultColor(res);
-    setParityHistory(prev => [res, ...prev].slice(0, 15));
-    if(audioRef.current) audioRef.current.playTick();
-
-    // Settle Bet
-    setParityUserBet(currentBet => {
-      if(currentBet) {
-        if(currentBet.color === res) {
-          const mult = res === 'violet' ? 4.5 : 2;
-          const winAmount = currentBet.amount * mult;
-          setBalance(b => b + winAmount);
-          if(audioRef.current) audioRef.current.playCashout();
-        } else {
-          if(audioRef.current) audioRef.current.playCrash();
-        }
-      }
-      return null;
-    });
-
-    setTimeout(() => setParityResultColor(null), 3000);
+    socketRef.current.emit('crash_cashout', {});
   };
 
   const placeParityBet = () => {
     initAudio();
     if(balance >= parityBetAmount && paritySelected && parityTimer > 2) {
-      setBalance(b => b - parityBetAmount);
+      socketRef.current.emit('parity_place_bet', { amount: parityBetAmount, color: paritySelected });
       setParityUserBet({ color: paritySelected, amount: parityBetAmount });
       setParitySelected(null);
     }
   };
 
-
-  // ================= MINES ENGINE =================
-  const MINES_MULTIPLIERS = [1.00, 1.04, 1.09, 1.15, 1.22, 1.30, 1.40, 1.52, 1.66, 1.83, 2.05, 2.32];
-  const [minesGrid, setMinesGrid] = useState(Array(25).fill({ revealed: false, isMine: false }));
-  const [minesActive, setMinesActive] = useState(false);
-  const [minesCount, setMinesCount] = useState(3);
-  const [minesBetAmount, setMinesBetAmount] = useState(10);
-  const [minesMultiplier, setMinesMultiplier] = useState(1.0);
-  const [minesHiddenGrid, setMinesHiddenGrid] = useState(Array(25).fill(false));
-  const [minesStep, setMinesStep] = useState(0);
-
   const startMines = () => {
     initAudio();
     if(balance >= minesBetAmount) {
-      setBalance(b => b - minesBetAmount);
-      let bombs = Array(25).fill(false);
-      let placed = 0;
-      while(placed < minesCount) {
-        let r = Math.floor(Math.random() * 25);
-        if(!bombs[r]) { bombs[r] = true; placed++; }
-      }
-      setMinesHiddenGrid(bombs);
-      setMinesGrid(Array(25).fill({ revealed: false, isMine: false }));
-      setMinesMultiplier(1.0);
-      setMinesStep(0);
-      setMinesActive(true);
+      socketRef.current.emit('mines_start', { betAmount: minesBetAmount });
     }
   };
 
   const clickMine = (index) => {
     initAudio();
     if(!minesActive || minesGrid[index].revealed) return;
-    
-    let newGrid = [...minesGrid];
-    if(minesHiddenGrid[index]) {
-      // Boom
-      newGrid[index] = { revealed: true, isMine: true };
-      setMinesGrid(minesHiddenGrid.map(b => ({ revealed: true, isMine: b })));
-      setMinesActive(false);
-      if(audioRef.current) audioRef.current.playCrash();
-    } else {
-      // Safe
-      newGrid[index] = { revealed: true, isMine: false };
-      setMinesGrid(newGrid);
-      const nextStep = minesStep + 1;
-      setMinesStep(nextStep);
-      setMinesMultiplier(MINES_MULTIPLIERS[Math.min(nextStep, MINES_MULTIPLIERS.length - 1)]);
-      if(audioRef.current) audioRef.current.playTick();
-    }
+    socketRef.current.emit('mines_reveal', index);
   };
 
   const cashoutMines = () => {
-    if(minesActive && minesMultiplier > 1.0) {
-      const win = minesBetAmount * minesMultiplier;
-      setBalance(b => b + win);
-      setMinesActive(false);
-      setMinesGrid(minesHiddenGrid.map((b, i) => ({ revealed: true, isMine: b || minesGrid[i].revealed })));
-      if(audioRef.current) audioRef.current.playCashout();
-    }
+    if(minesActive && minesMultiplier > 1.0) socketRef.current.emit('mines_cashout', {});
   };
-
-
-  // ================= DICE ENGINE =================
-  const [diceTarget, setDiceTarget] = useState(50);
-  const [diceMode, setDiceMode] = useState('under'); 
-  const [diceBetAmount, setDiceBetAmount] = useState(10);
-  const [diceResult, setDiceResult] = useState(null);
 
   const rollDice = () => {
     initAudio();
     if(balance >= diceBetAmount) {
-      setBalance(b => b - diceBetAmount);
-      const roll = Math.floor(Math.random() * 100);
-      setDiceResult(roll);
-      
-      let win = false;
-      let mult = 0;
-      if (diceMode === 'over' && roll > diceTarget) { win = true; mult = 99 / (100 - diceTarget); }
-      if (diceMode === 'under' && roll < diceTarget) { win = true; mult = 99 / diceTarget; }
-
-      if(win) {
-        const winAmount = diceBetAmount * mult;
-        setBalance(b => b + winAmount);
-        if(audioRef.current) audioRef.current.playCashout();
-      } else {
-        if(audioRef.current) audioRef.current.playCrash();
-      }
+      socketRef.current.emit('dice_roll', { amount: diceBetAmount, target: diceTarget, isOver: diceMode === 'over' });
     }
   };
 
@@ -336,6 +387,47 @@ function App() {
   };
 
   // ================= RENDERS =================
+  const renderLogin = () => (
+    <div className="mobile-wrapper" style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
+      <div className="glass-panel" style={{width: '90%', padding: '30px', textAlign: 'center'}}>
+        <img src="/logo.png" alt="ZexWin" style={{height: '50px', marginBottom: '20px'}} />
+        <h2 style={{color: 'var(--gold-primary)', marginBottom: '10px'}}>Secure Login</h2>
+        <p style={{color: '#aaa', fontSize: 14, marginBottom: 20}}>Please enter your mobile number</p>
+        
+        {loginError && <p style={{color: '#ff4444', marginBottom: '10px', fontSize: 14}}>{loginError}</p>}
+        
+        {!otpSent ? (
+          <>
+            <div className="input-group" style={{display:'flex', gap: 10, marginBottom: 20}}>
+              <input type="text" value="+91" disabled className="form-input" style={{width: '60px', textAlign: 'center', padding: '12px 5px'}} />
+              <input 
+                type="number" placeholder="Mobile Number" className="form-input" style={{flex: 1}} 
+                value={mobile} onChange={e => setMobile(e.target.value)} 
+              />
+            </div>
+            <button className="primary-btn-large" onClick={sendOtp} disabled={isLoading}>
+              {isLoading ? 'Sending...' : 'Get OTP'}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="input-group" style={{marginBottom: 20}}>
+              <input 
+                type="number" placeholder="Enter 6-digit OTP" className="form-input" style={{textAlign:'center', letterSpacing: '4px'}} 
+                value={otp} onChange={e => setOtp(e.target.value)} 
+              />
+              <p style={{color: '#00e676', fontSize: 12, marginTop: 10}}>OTP Sent! (Check console for dummy OTP)</p>
+            </div>
+            <button className="primary-btn-large" onClick={verifyOtp} disabled={isLoading}>
+              {isLoading ? 'Verifying...' : 'Verify & Login'}
+            </button>
+            <button className="glass-btn" style={{marginTop: 10, width: '100%', padding: 10}} onClick={() => setOtpSent(false)}>Change Number</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   const renderFastParity = () => (
     <div className="crash-game-container fade-in">
       <header className="top-header glass-header">
@@ -345,7 +437,7 @@ function App() {
       </header>
       
       <div className="parity-timer-card glass-panel">
-        <div className="parity-period">Period: Local Prototype</div>
+        <div className="parity-period">Global Server Timer</div>
         <div className="parity-time">
           <span>00</span>:<span>{parityTimer < 10 ? `0${parityTimer}` : parityTimer}</span>
         </div>
@@ -417,12 +509,8 @@ function App() {
       <div className="control-panel glass-panel">
         <div className="mines-config">
           <span>Mines:</span>
-          <select className="mines-select" value={minesCount} onChange={(e) => setMinesCount(Number(e.target.value))} disabled={minesActive}>
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
+          <select className="mines-select" value={minesCount} onChange={(e) => setMinesCount(Number(e.target.value))} disabled={true}>
+            <option value={3}>3 (Phase 1 Fix)</option>
           </select>
           <div style={{flex:1}}></div>
           <div className="amount-adjuster">
@@ -593,96 +681,13 @@ function App() {
             </div>
           </div>
         </div>
-
-        <div className="players-section glass-panel" style={{marginBottom: 0}}>
-          <div className="players-header">
-            <div className="players-count"><Users size={16} /> Players: Online</div>
-            <div className="my-order"><Wallet size={16} /> Local Demo</div>
-          </div>
-        </div>
       </div>
     );
   };
 
   // === OVERLAY SCREENS ===
-  const renderRechargeScreen = () => (
-    <div className="modal-screen slide-up glass-panel">
-      <div className="modal-header">
-        <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
-        <h2>Recharge</h2>
-        <div style={{width: 24}}></div>
-      </div>
-      <div className="modal-content">
-        <div className="wallet-card">
-          <p>Total Balance</p>
-          <h3>₹ {balance.toFixed(2)}</h3>
-        </div>
-        <h4 className="section-title">Select Amount</h4>
-        <div className="recharge-grid">
-          {[100, 500, 1000, 2000, 5000, 10000].map(amt => (
-            <div key={amt} className="recharge-amt-btn glass-btn" onClick={() => {
-              setBalance(b => b + amt);
-              alert(`₹${amt} added for prototype testing!`);
-              setActiveTab('home');
-            }}>
-              ₹ {amt}
-            </div>
-          ))}
-        </div>
-        <button className="primary-btn-large mt-auto" onClick={() => setActiveTab('home')}>Confirm Recharge</button>
-      </div>
-    </div>
-  );
-
-  const renderInviteScreen = () => (
-    <div className="modal-screen slide-up glass-panel">
-      <div className="modal-header">
-        <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
-        <h2>Invite & Earn</h2>
-        <div style={{width: 24}}></div>
-      </div>
-      <div className="modal-content">
-        <div className="invite-banner">
-          <h2>Earn 50% Commission</h2>
-          <p>On every friend's winning!</p>
-        </div>
-        <div className="stats-row">
-          <div className="stat-box glass-btn"><p>Invited</p><h4>12 Users</h4></div>
-          <div className="stat-box glass-btn"><p>Earned</p><h4 className="gold-text">₹ 4,500</h4></div>
-        </div>
-        <div className="referral-box glass-btn">
-          <p>Your Referral Link:</p>
-          <div className="ref-link-area">
-            <span>https://zexwin.com/r/PrototypeDemo</span>
-            <button onClick={() => alert("Copied!")}><Share2 size={16}/></button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderQuestsScreen = () => (
-    <div className="modal-screen slide-up glass-panel">
-      <div className="modal-header">
-        <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
-        <h2>Daily Quests</h2>
-        <div style={{width: 24}}></div>
-      </div>
-      <div className="modal-content">
-        <div className="quest-card glass-btn">
-          <div className="q-info"><h4>Play 10 Rounds</h4><p>Progress: 4/10</p><div className="progress-bar"><div className="fill" style={{width:'40%'}}></div></div></div>
-          <button className="q-btn disabled">₹ 20</button>
-        </div>
-        <div className="quest-card completed glass-btn">
-          <div className="q-info"><h4>Win ₹ 500</h4><p>Progress: 500/500</p><div className="progress-bar"><div className="fill" style={{width:'100%'}}></div></div></div>
-          <button className="q-btn claim" onClick={() => { setBalance(b => b + 100); alert("Claimed ₹100!"); setActiveTab('home'); }}>Claim ₹ 100</button>
-        </div>
-      </div>
-    </div>
-  );
-
   const renderProfileScreen = () => (
-    <div className="modal-screen slide-up glass-panel">
+    <div className="modal-screen slide-up glass-panel" style={{overflowY: 'auto'}}>
       <div className="modal-header">
         <ChevronLeft onClick={() => setActiveTab('home')} className="back-btn" />
         <h2>My Profile</h2>
@@ -690,21 +695,94 @@ function App() {
       </div>
       <div className="modal-content">
         <div className="profile-header-card glass-btn">
-          <div className="p-avatar"><img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=DemoUser`} alt="profile"/></div>
-          <div className="p-details"><h3>Demo Client</h3><p>ID: 9999</p></div>
+          <div className="p-avatar"><img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.mobile}`} alt="profile"/></div>
+          <div className="p-details"><h3>+91 {user?.mobile}</h3><p>ID: {user?.id} | Role: {user?.role.toUpperCase()}</p></div>
         </div>
-        <div className="p-menu glass-btn" style={{padding: 0}}>
-          <div className="p-menu-item"><Wallet size={20} className="icon-gold"/><span>Withdraw Funds</span><ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/></div>
+
+        <div className="p-menu glass-btn" style={{padding: 0, marginTop: 20}}>
+          {user?.role === 'admin' && (
+            <div className="p-menu-item" onClick={() => {setActiveTab('home'); setCurrentRoute('admin');}}>
+              <ShieldAlert size={20} className="icon-gold"/><span>Admin Dashboard</span><ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/>
+            </div>
+          )}
+          <div className="p-menu-item" onClick={() => {setActiveTab('home'); setCurrentRoute('wallet');}}><Wallet size={20} className="icon-gold"/><span>Withdraw Funds</span><ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/></div>
           <div className="p-menu-item" onClick={() => setSoundEnabled(!soundEnabled)}>
             {soundEnabled ? <Volume2 size={20} className="icon-gold"/> : <VolumeX size={20} className="icon-gold"/>}
             <span>Sound Effects {soundEnabled ? 'ON' : 'OFF'}</span>
             <ChevronLeft size={16} style={{transform: 'rotate(180deg)'}} className="ml-auto"/>
           </div>
-          <div className="p-menu-item logout" onClick={() => alert("Logout disabled in demo")}><LogOut size={20} /><span>Logout</span></div>
+          <div className="p-menu-item logout" onClick={logout}><LogOut size={20} /><span>Logout</span></div>
         </div>
       </div>
     </div>
   );
+
+  const renderAdminPanel = () => {
+    return (
+      <div className="crash-game-container fade-in" style={{overflowY: 'auto'}}>
+        <header className="top-header glass-header">
+          <ChevronLeft size={24} className="icon-gold" onClick={() => setCurrentRoute('lobby')} style={{cursor: 'pointer'}} />
+          <div className="header-title">Admin Dashboard</div>
+          <ShieldAlert size={20} className="icon-gold" />
+        </header>
+
+        <div className="glass-panel mt-15" style={{margin: '10px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 15}}>
+            <h4 className="gold-text">Registered Users</h4>
+            <button className="primary-btn-large" style={{padding: '5px 10px', width: 'auto'}} onClick={fetchAdminData}>Refresh</button>
+          </div>
+          
+          <table className="players-table" style={{fontSize: 12}}>
+            <thead><tr><th>Mobile</th><th>Balance</th><th>Bank Setup</th></tr></thead>
+            <tbody>
+              {adminUsers.map(u => (
+                <tr key={u.id}>
+                  <td>+91 {u.mobile}</td>
+                  <td className="gold-text">₹{u.balance.toFixed(2)}</td>
+                  <td>{u.account_number ? 'Yes' : 'No'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderWalletScreen = () => {
+    return (
+      <div className="crash-game-container fade-in" style={{overflowY: 'auto'}}>
+        <header className="top-header glass-header">
+          <ChevronLeft size={24} className="icon-gold" onClick={() => setCurrentRoute('lobby')} style={{cursor: 'pointer'}} />
+          <div className="header-title">Wallet & Withdrawal</div>
+          <Wallet size={20} className="icon-gold" />
+        </header>
+
+        <div className="balance-card glass-panel" style={{margin: '15px', textAlign: 'center'}}>
+          <p style={{color: '#aaa', fontSize: 14}}>Total Balance</p>
+          <h2 className="gold-text" style={{fontSize: 32}}>₹{balance.toFixed(2)}</h2>
+        </div>
+
+        <h4 className="section-title" style={{marginLeft: 15}}>Bank & Withdrawal Setup</h4>
+        <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
+          {bankDetails ? (
+            <div style={{display:'flex', flexDirection:'column', gap: 10}}>
+              <input type="text" placeholder="Bank Name" className="form-input" value={bankDetails.bank_name} onChange={e => setBankDetails({...bankDetails, bank_name: e.target.value})} />
+              <input type="text" placeholder="Account Number" className="form-input" value={bankDetails.account_number} onChange={e => setBankDetails({...bankDetails, account_number: e.target.value})} />
+              <input type="text" placeholder="IFSC Code" className="form-input" value={bankDetails.ifsc_code} onChange={e => setBankDetails({...bankDetails, ifsc_code: e.target.value})} />
+              <input type="text" placeholder="UPI ID" className="form-input" value={bankDetails.upi_id} onChange={e => setBankDetails({...bankDetails, upi_id: e.target.value})} />
+              <button className="primary-btn-large" style={{padding: 10, fontSize: 14}} onClick={saveBankDetails}>Save Bank Details</button>
+            </div>
+          ) : <p style={{textAlign: 'center', fontSize: 12}}>Loading...</p>}
+        </div>
+
+        <h4 className="section-title" style={{marginLeft: 15}}>Transaction History</h4>
+        <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
+          <p style={{textAlign: 'center', color: '#888', fontSize: 12}}>No recent transactions found.</p>
+        </div>
+      </div>
+    );
+  };
 
   // === LOBBY SCREEN ===
   const renderLobby = () => (
@@ -749,11 +827,13 @@ function App() {
         </div>
         
         <div className="winners-marquee glass-panel">
-           <marquee>🎉 <b>Alex99</b> just won ₹15,000 in Crash! &nbsp; &nbsp; 🎉 <b>Sniper007</b> just won ₹5,200 in Parity! &nbsp; &nbsp; 🎉 <b>CryptoKing</b> withdrew ₹50,000!</marquee>
+           <marquee>🎉 <b>91****9876</b> just won ₹15,000 in Crash! &nbsp; &nbsp; 🎉 <b>91****5432</b> just won ₹5,200 in Parity!</marquee>
         </div>
       </div>
     </div>
   );
+
+  if (!token || !user) return renderLogin();
 
   return (
     <div className="mobile-wrapper">
@@ -762,24 +842,34 @@ function App() {
       {currentRoute === 'parity' && renderFastParity()}
       {currentRoute === 'mines' && renderMines()}
       {currentRoute === 'dice' && renderDice()}
+      {currentRoute === 'admin' && renderAdminPanel()}
+      {currentRoute === 'wallet' && renderWalletScreen()}
 
       {/* Overlay Screens */}
-      {activeTab === 'recharge' && renderRechargeScreen()}
-      {activeTab === 'invite' && renderInviteScreen()}
-      {activeTab === 'quests' && renderQuestsScreen()}
       {activeTab === 'profile' && renderProfileScreen()}
+      {activeTab === 'invite' && (
+        <div className="modal-screen slide-up glass-panel" style={{display: 'flex', flexDirection: 'column', alignItems:'center', justifyContent:'center'}}>
+           <h2 className="gold-text">Invite & Earn</h2>
+           <p style={{color: '#888', marginTop: 10}}>Coming Soon</p>
+           <button className="primary-btn-large" style={{width: 'auto', padding: '10px 30px', marginTop: 20}} onClick={() => setActiveTab('home')}>Close</button>
+        </div>
+      )}
+      {activeTab === 'quests' && (
+        <div className="modal-screen slide-up glass-panel" style={{display: 'flex', flexDirection: 'column', alignItems:'center', justifyContent:'center'}}>
+           <h2 className="gold-text">Daily Quests</h2>
+           <p style={{color: '#888', marginTop: 10}}>Coming Soon</p>
+           <button className="primary-btn-large" style={{width: 'auto', padding: '10px 30px', marginTop: 20}} onClick={() => setActiveTab('home')}>Close</button>
+        </div>
+      )}
 
       {/* Bottom Nav Bar */}
       {currentRoute === 'lobby' && (
         <div className="bottom-nav glass-nav">
-          <div className={`nav-item ${activeTab === 'recharge' ? 'active-nav' : ''}`} onClick={() => setActiveTab('recharge')}><Wallet size={20} /><span>Recharge</span></div>
-          <div className={`nav-item ${activeTab === 'invite' ? 'active-nav' : ''}`} onClick={() => setActiveTab('invite')}><LinkIcon size={20} /><span>Invite</span></div>
-          <div className="nav-item nav-item-center" onClick={() => setActiveTab('home')}>
-            <div className="home-btn pulse-glow"><Crown size={28} /></div>
-            <span className={`home-text ${activeTab === 'home' ? 'active-nav-text' : ''}`}>HOME</span>
-          </div>
-          <div className={`nav-item ${activeTab === 'quests' ? 'active-nav' : ''}`} onClick={() => setActiveTab('quests')}><CalendarCheck size={20} /><span>Quests</span></div>
-          <div className={`nav-item ${activeTab === 'profile' ? 'active-nav' : ''}`} onClick={() => setActiveTab('profile')}><User size={20} /><span>My</span></div>
+          <div className="nav-item" onClick={() => {setActiveTab('home'); setCurrentRoute('wallet');}}><Wallet size={24} /><span>Recharge</span></div>
+          <div className={`nav-item ${activeTab === 'invite' ? 'active-nav' : ''}`} onClick={() => setActiveTab('invite')}><LinkIcon size={24} /><span>Invite</span></div>
+          <div className={`nav-item center-tab ${activeTab === 'home' ? 'active-nav' : ''}`} onClick={() => setActiveTab('home')}><div className="center-icon-bg"><Crown size={28} /></div><span style={{fontWeight: 'bold'}}>HOME</span></div>
+          <div className={`nav-item ${activeTab === 'quests' ? 'active-nav' : ''}`} onClick={() => setActiveTab('quests')}><CalendarCheck size={24} /><span>Quests</span></div>
+          <div className={`nav-item ${activeTab === 'profile' ? 'active-nav' : ''}`} onClick={() => setActiveTab('profile')}><User size={24} /><span>My</span></div>
         </div>
       )}
     </div>
