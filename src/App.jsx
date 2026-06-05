@@ -855,7 +855,8 @@ function App() {
         padding: '20px 15px 40px 15px',
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
-        boxShadow: '0 4px 20px rgba(255,215,0,0.1)'
+        boxShadow: '0 4px 20px rgba(255,215,0,0.1)',
+        flexShrink: 0
       }}>
         {/* Header Bar */}
         <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 25}}>
@@ -902,7 +903,7 @@ function App() {
       </div>
 
       {/* Mid Section Row */}
-      <div style={{display: 'flex', margin: '-20px 15px 20px 15px', position: 'relative', zIndex: 2, background: 'rgba(20,15,5,0.9)', borderRadius: 15, padding: 15, border: '1px solid rgba(255,215,0,0.1)', justifyContent: 'space-around'}}>
+      <div style={{display: 'flex', margin: '-20px 15px 20px 15px', position: 'relative', zIndex: 2, background: 'rgba(20,15,5,0.9)', borderRadius: 15, padding: 15, border: '1px solid rgba(255,215,0,0.1)', justifyContent: 'space-around', flexShrink: 0}}>
          <div onClick={() => setActiveTab('quests')} style={{textAlign: 'center', cursor: 'pointer'}}>
             <CalendarCheck size={30} className="icon-gold" style={{marginBottom: 5}}/>
             <div style={{color: '#fff', fontSize: 12, fontWeight: 'bold'}}>Quests</div>
@@ -919,7 +920,7 @@ function App() {
       </div>
 
       {/* Menu List */}
-      <div className="glass-panel" style={{margin: '0 15px', padding: 0, overflow: 'hidden', borderRadius: 15}}>
+      <div className="glass-panel" style={{margin: '0 15px', padding: 0, overflow: 'hidden', borderRadius: 15, flexShrink: 0}}>
         <div className="p-menu-item" onClick={() => showToast('Redirecting to Official Channel...')}>
           <div style={{display: 'flex', alignItems: 'center', gap: 15}}><Radio size={20} className="icon-gold"/> <span style={{color: '#fff', fontSize: 14}}>Official Channel</span></div>
           <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
@@ -983,6 +984,9 @@ function App() {
           <div style={{display: 'flex', alignItems: 'center', gap: 15}}><LogOut size={20} style={{color: '#f44336'}}/> <span style={{color: '#f44336', fontSize: 14}}>Log Out</span></div>
         </div>
       </div>
+
+      {/* Spacer for bottom nav */}
+      <div style={{height: 120, flexShrink: 0}}></div>
 
     </div>
   );
