@@ -56,6 +56,11 @@ function App() {
   const [currentRoute, setCurrentRoute] = useState('lobby'); 
   const [activeTab, setActiveTab] = useState('home'); 
   const [walletTab, setWalletTab] = useState('deposit');
+  const [toastMessage, setToastMessage] = useState(null);
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -309,8 +314,8 @@ function App() {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(bankDetails)
       });
-      if(res.ok) alert("Bank details saved securely!");
-    } catch(e) { alert("Failed to save bank details"); }
+      if(res.ok) showToast("Bank details saved securely!");
+    } catch(e) { showToast("Failed to save bank details"); }
   };
 
   const fetchAdminData = async () => {
@@ -318,7 +323,7 @@ function App() {
       const res = await fetch(`${API_BASE}/admin/users`, { headers: { 'Authorization': `Bearer ${token}` }});
       const data = await res.json();
       if(data.users) setAdminUsers(data.users);
-    } catch(e) { alert("Unauthorized"); }
+    } catch(e) { showToast("Unauthorized"); }
   };
 
   const logout = () => {
@@ -704,7 +709,7 @@ function App() {
           <p style={{color: '#888', fontSize: 12, marginBottom: 5}}>Your Referral Link</p>
           <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
              <input type="text" value={`https://zexwin.vercel.app/register?ref=${user?.mobile || '999999999'}`} readOnly className="form-input" style={{flex: 1, padding: 8, fontSize: 12}} />
-             <button className="primary-btn-large" style={{width: 'auto', padding: '8px 15px', fontSize: 12}} onClick={() => alert('Link Copied!')}>Copy</button>
+             <button className="primary-btn-large" style={{width: 'auto', padding: '8px 15px', fontSize: 12}} onClick={() => showToast('Link Copied!')}>Copy</button>
           </div>
         </div>
       </div>
@@ -721,7 +726,7 @@ function App() {
       </div>
 
       <div style={{margin: '0 15px'}}>
-        <button className="primary-btn-large" onClick={() => alert('No commission to claim yet.')}>Claim Commission</button>
+        <button className="primary-btn-large" onClick={() => showToast('No commission to claim yet.')}>Claim Commission</button>
       </div>
     </div>
   );
@@ -866,9 +871,9 @@ function App() {
             </div>
             <input type="number" placeholder="Enter Custom Amount" className="form-input" style={{marginBottom: 15}} value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
             <button className="primary-btn-large" onClick={() => {
-              if(!depositAmount || Number(depositAmount) < 100) return alert('Minimum deposit is ₹100');
+              if(!depositAmount || Number(depositAmount) < 100) return showToast('Minimum deposit is ₹100');
               setBalance(prev => prev + Number(depositAmount));
-              alert(`Successfully initiated recharge of ₹${depositAmount}!`);
+              showToast(`Successfully initiated recharge of ₹${depositAmount}!`);
               setDepositAmount('');
             }}>Recharge Now</button>
           </div>
@@ -880,10 +885,10 @@ function App() {
             <div className="glass-panel" style={{margin: '0 15px 20px 15px', padding: 15}}>
               <input type="number" placeholder="Enter Amount to Withdraw" className="form-input" style={{marginBottom: 15}} value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} />
               <button className="primary-btn-large" onClick={() => {
-                if(!withdrawAmount || Number(withdrawAmount) < 100) return alert('Minimum withdrawal is ₹100');
-                if(Number(withdrawAmount) > balance) return alert('Insufficient balance!');
+                if(!withdrawAmount || Number(withdrawAmount) < 100) return showToast('Minimum withdrawal is ₹100');
+                if(Number(withdrawAmount) > balance) return showToast('Insufficient balance!');
                 setBalance(prev => prev - Number(withdrawAmount));
-                alert(`Withdrawal request of ₹${withdrawAmount} submitted!`);
+                showToast(`Withdrawal request of ₹${withdrawAmount} submitted!`);
                 setWithdrawAmount('');
               }}>Request Withdrawal</button>
             </div>
@@ -964,6 +969,7 @@ function App() {
 
   return (
     <div className="mobile-wrapper">
+      {toastMessage && <div className="toast-notification">{toastMessage}</div>}
       {currentRoute === 'lobby' && renderLobby()}
       {currentRoute === 'crash' && renderCrashGame()}
       {currentRoute === 'parity' && renderFastParity()}

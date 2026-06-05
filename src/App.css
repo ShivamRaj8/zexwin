@@ -449,6 +449,26 @@ body {
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold-primary);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: bold;
+  z-index: 9999;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  animation: slide-down 0.3s ease-out forwards;
+}
+
+@keyframes slide-down {
+  0% { top: -50px; opacity: 0; }
+  100% { top: 20px; opacity: 1; }
+}
+
 /* Overlay Modal Screens */
 .modal-screen {
   position: fixed; top: 0; bottom: 70px; width: 100%; max-width: 450px;
