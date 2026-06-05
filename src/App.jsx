@@ -58,6 +58,9 @@ function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [walletTab, setWalletTab] = useState('deposit');
   const [toastMessage, setToastMessage] = useState(null);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [language, setLanguage] = useState('en');
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -950,7 +953,10 @@ function App() {
               </div>
             </div>
           </div>
-          <div style={{background: 'rgba(255,255,255,0.1)', padding: '5px 10px', borderRadius: 15, display: 'flex', alignItems: 'center', gap: 5}}>
+          <div 
+            style={{background: 'rgba(255,255,255,0.1)', padding: '5px 10px', borderRadius: 15, display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer'}}
+            onClick={() => setShowLanguageModal(true)}
+          >
              <span style={{color: '#fff', fontSize: 12}}>भाषा</span> <Settings size={14} className="icon-gold"/>
           </div>
         </div>
@@ -1310,6 +1316,33 @@ function App() {
       {activeTab === 'profile' && renderProfileScreen()}
       {activeTab === 'invite' && renderInviteScreen()}
       {activeTab === 'quests' && renderQuestsScreen()}
+
+      {/* Language Modal */}
+      {showLanguageModal && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center'}}>
+          <div className="glass-panel slide-up" style={{width: '100%', maxWidth: 400, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, padding: 20}}>
+            <h3 style={{color: 'var(--gold-primary)', margin: '0 0 20px 0', textAlign: 'center'}}>Select Language</h3>
+            
+            <div 
+              style={{padding: 15, background: language === 'en' ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.05)', border: language === 'en' ? '1px solid var(--gold-primary)' : '1px solid transparent', borderRadius: 10, marginBottom: 10, cursor: 'pointer', display: 'flex', justifyContent: 'space-between'}}
+              onClick={() => { setLanguage('en'); setShowLanguageModal(false); }}
+            >
+              <span style={{color: '#fff'}}>English</span>
+              {language === 'en' && <CheckCircle size={18} className="icon-gold" />}
+            </div>
+
+            <div 
+              style={{padding: 15, background: language === 'hi' ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.05)', border: language === 'hi' ? '1px solid var(--gold-primary)' : '1px solid transparent', borderRadius: 10, marginBottom: 20, cursor: 'pointer', display: 'flex', justifyContent: 'space-between'}}
+              onClick={() => { setLanguage('hi'); setShowLanguageModal(false); alert('Hindi translation coming soon!'); }}
+            >
+              <span style={{color: '#fff'}}>हिन्दी (Hindi)</span>
+              {language === 'hi' && <CheckCircle size={18} className="icon-gold" />}
+            </div>
+
+            <button className="glass-btn" style={{width: '100%'}} onClick={() => setShowLanguageModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Nav Bar */}
       {currentRoute === 'lobby' && (
