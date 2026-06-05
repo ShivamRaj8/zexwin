@@ -869,7 +869,7 @@ function App() {
     return (
       <div className="crash-game-container fade-in" style={{overflowY: 'auto'}}>
         <header className="top-header glass-header">
-          <ChevronLeft size={24} className="icon-gold" onClick={() => setCurrentRoute('profile')} style={{cursor: 'pointer'}} />
+          <ChevronLeft size={24} className="icon-gold" onClick={() => {setCurrentRoute('lobby'); setActiveTab('profile');}} style={{cursor: 'pointer'}} />
           <div className="header-title">Admin Control</div>
           <ShieldAlert size={20} className="icon-gold" />
         </header>
