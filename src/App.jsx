@@ -877,48 +877,161 @@ function App() {
 
   const renderQuestsScreen = () => (
     <div className="modal-screen fade-in" style={{overflowY: 'auto', background: '#0a0502', paddingBottom: 100, zIndex: 40}}>
-      <div className="modal-header" style={{padding: '20px 15px', borderBottom: '1px solid rgba(255,215,0,0.1)', display: 'flex', justifyContent: 'center'}}>
-        <h2 className="gold-text">Daily Quests</h2>
+      {/* Top Header Background */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1f1a0e 0%, #000000 100%)',
+        position: 'relative',
+        padding: '20px 15px 40px 15px',
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        boxShadow: '0 4px 20px rgba(255,215,0,0.1)'
+      }}>
+        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 20}}>
+          <h2 className="gold-text" style={{fontSize: 20, margin: 0}}>Quests</h2>
+        </div>
+
+        {/* 7 Days Grid */}
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10}}>
+          {/* Day 1 (Completed) */}
+          <div style={{background: 'linear-gradient(180deg, #ffca28, #ff8f00)', borderRadius: 8, padding: '5px', textAlign: 'center', position: 'relative'}}>
+            <div style={{fontSize: 10, color: '#000', fontWeight: 'bold', borderBottom: '1px solid rgba(0,0,0,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 1</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span>🪙</span><span style={{color: '#000', fontWeight: 'bold', fontSize: 12}}>₹15</span>
+            </div>
+            <div style={{position: 'absolute', bottom: -5, right: -5, background: '#00e676', borderRadius: '50%'}}><CheckCircle size={14} color="#fff" /></div>
+          </div>
+          {/* Day 2 (Completed) */}
+          <div style={{background: 'linear-gradient(180deg, #ffca28, #ff8f00)', borderRadius: 8, padding: '5px', textAlign: 'center', position: 'relative'}}>
+            <div style={{fontSize: 10, color: '#000', fontWeight: 'bold', borderBottom: '1px solid rgba(0,0,0,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 2</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span>🪙</span><span style={{color: '#000', fontWeight: 'bold', fontSize: 12}}>₹21</span>
+            </div>
+            <div style={{position: 'absolute', bottom: -5, right: -5, background: '#00e676', borderRadius: '50%'}}><CheckCircle size={14} color="#fff" /></div>
+          </div>
+          {/* Day 3 (Current) */}
+          <div style={{background: 'linear-gradient(180deg, #d84315, #ff8f00)', borderRadius: 8, padding: '5px', textAlign: 'center', position: 'relative', boxShadow: '0 0 10px rgba(255,143,0,0.5)'}}>
+            <div style={{fontSize: 10, color: '#fff', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.2)', paddingBottom: 2, marginBottom: 5}}>Day 3</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span>🪙</span><span style={{color: '#fff', fontWeight: 'bold', fontSize: 12}}>₹25</span>
+            </div>
+          </div>
+          {/* Day 4 */}
+          <div style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 8, padding: '5px', textAlign: 'center'}}>
+            <div style={{fontSize: 10, color: '#aaa', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 4</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span style={{opacity: 0.5}}>🪙</span><span style={{color: '#fff', fontSize: 12}}>?</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20}}>
+          {/* Day 5 */}
+          <div style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 8, padding: '5px', textAlign: 'center'}}>
+            <div style={{fontSize: 10, color: '#aaa', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 5</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span style={{opacity: 0.5}}>🪙</span><span style={{color: '#fff', fontSize: 12}}>?</span>
+            </div>
+          </div>
+          {/* Day 6 */}
+          <div style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 8, padding: '5px', textAlign: 'center'}}>
+            <div style={{fontSize: 10, color: '#aaa', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 6</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span style={{opacity: 0.5}}>🪙</span><span style={{color: '#fff', fontSize: 12}}>?</span>
+            </div>
+          </div>
+          {/* Day 7 */}
+          <div style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 8, padding: '5px', textAlign: 'center'}}>
+            <div style={{fontSize: 10, color: '#aaa', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 2, marginBottom: 5}}>Day 7</div>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2}}>
+              <span style={{opacity: 0.5}}>🎁</span><span style={{color: 'var(--gold-primary)', fontSize: 12}}>?</span>
+            </div>
+          </div>
+        </div>
+
+        <button style={{
+          width: '100%', background: 'linear-gradient(180deg, #ffca28 0%, #ff8f00 100%)', 
+          color: '#000', border: 'none', padding: '12px', borderRadius: 25, 
+          fontSize: 16, fontWeight: 'bold', cursor: 'pointer', marginBottom: 15,
+          boxShadow: '0 4px 10px rgba(255,143,0,0.4)'
+        }}>
+          Daily Quest
+        </button>
+
+        <div style={{background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '8px 20px', borderRadius: 20, margin: '0 auto', width: 'fit-content'}}>
+           <Send size={16} color="#0284c7" />
+           <span style={{color: '#0284c7', fontSize: 12, fontWeight: 'bold'}}>Official channel <span style={{color: '#ea580c'}}>daily bonus</span> 🎁</span>
+        </div>
       </div>
 
-      <div style={{margin: '20px 15px', paddingBottom: 100}}>
-        <h4 className="section-title" style={{marginBottom: 15}}>Available Tasks</h4>
-        
-        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
-          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Zap size={24} className="icon-gold" /></div>
+      {/* Main Quests Area */}
+      <div style={{margin: '15px', marginTop: '-20px', position: 'relative', zIndex: 10}}>
+        {/* Check-in Card */}
+        <div className="glass-panel" style={{padding: 15, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 15}}>
+          <div style={{background: '#00e676', padding: 10, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'}}><CalendarCheck size={24} color="#fff" /></div>
           <div style={{flex: 1}}>
-            <h4 style={{color: '#fff', fontSize: 14}}>Play 5 Crash Games</h4>
-            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
-               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+            <h4 style={{color: '#fff', fontSize: 14, margin: '0 0 2px 0'}}>Check-in for 7 consecutive days(2/7)</h4>
+            <p style={{color: '#888', fontSize: 10, margin: '0 0 10px 0'}}>Upgrade VIP to get more bonus</p>
+            
+            <div style={{display: 'flex', gap: 4, alignItems: 'center'}}>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
+              <div style={{width: 14, height: 14, borderRadius: '50%', background: 'var(--gold-primary)', color: '#000', fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'}}>2</div>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
+              <div style={{width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.2)'}}></div>
             </div>
-            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>0 / 5 Completed</p>
           </div>
-          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹10</button>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end'}}>
+             <span style={{color: '#ff8f00', fontWeight: 'bold', fontSize: 16, marginBottom: 5}}>+₹2</span>
+             <button style={{background: 'rgba(255,255,255,0.1)', color: '#aaa', border: 'none', padding: '5px 15px', borderRadius: 15, fontSize: 12}}>Locked</button>
+          </div>
         </div>
 
-        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
-          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Crown size={24} className="icon-gold" /></div>
-          <div style={{flex: 1}}>
-            <h4 style={{color: '#fff', fontSize: 14}}>Win ₹500 in Fast Parity</h4>
-            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
-               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+        <h3 className="gold-text" style={{marginBottom: 15, fontSize: 16}}>Quests</h3>
+
+        {/* Quest 1 */}
+        <div className="glass-panel" style={{padding: 15, marginBottom: 15}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15, marginBottom: 15}}>
+            <div style={{background: 'rgba(255,143,0,0.1)', padding: 10, borderRadius: '50%'}}><Award size={24} color="#ff8f00" /></div>
+            <div style={{flex: 1}}>
+              <h4 style={{color: '#fff', fontSize: 14, margin: '0 0 2px 0'}}>Recharge amount</h4>
+              <p style={{color: '#888', fontSize: 11, margin: 0}}>Recharge 1200</p>
             </div>
-            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>₹0 / ₹500 Completed</p>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end'}}>
+               <span style={{color: '#ff8f00', fontWeight: 'bold', fontSize: 16, marginBottom: 5}}>+₹30</span>
+               <button style={{background: 'transparent', border: '1px solid var(--gold-primary)', color: 'var(--gold-primary)', padding: '3px 20px', borderRadius: 15, fontSize: 12}}>Go</button>
+            </div>
           </div>
-          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹50</button>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+            <div style={{flex: 1, background: 'rgba(255,255,255,0.1)', height: 6, borderRadius: 3, overflow: 'hidden'}}>
+               <div style={{background: '#9c27b0', width: '33%', height: '100%'}}></div>
+            </div>
+            <span style={{color: '#888', fontSize: 10}}>33%</span>
+          </div>
         </div>
 
-        <div className="glass-panel" style={{padding: 15, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 15}}>
-          <div className="game-icon-bg" style={{background: 'rgba(255,215,0,0.1)', padding: 10, borderRadius: 10}}><Wallet size={24} className="icon-gold" /></div>
-          <div style={{flex: 1}}>
-            <h4 style={{color: '#fff', fontSize: 14}}>Deposit ₹1000</h4>
-            <div style={{background: 'rgba(0,0,0,0.5)', height: 6, borderRadius: 3, marginTop: 8, overflow: 'hidden'}}>
-               <div style={{background: 'var(--gold-primary)', width: '0%', height: '100%'}}></div>
+        {/* Quest 2 */}
+        <div className="glass-panel" style={{padding: 15, marginBottom: 15}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: 15, marginBottom: 15}}>
+            <div style={{background: 'rgba(255,143,0,0.1)', padding: 10, borderRadius: '50%'}}><List size={24} color="#ff8f00" /></div>
+            <div style={{flex: 1}}>
+              <h4 style={{color: '#fff', fontSize: 14, margin: '0 0 2px 0'}}>Big Winner</h4>
+              <p style={{color: '#888', fontSize: 11, margin: 0}}>Win 5000</p>
             </div>
-            <p style={{color: '#888', fontSize: 11, marginTop: 5}}>0 / 1 Completed</p>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end'}}>
+               <span style={{color: '#ff8f00', fontWeight: 'bold', fontSize: 16, marginBottom: 5}}>+₹60</span>
+               <button style={{background: 'transparent', border: '1px solid var(--gold-primary)', color: 'var(--gold-primary)', padding: '3px 20px', borderRadius: 15, fontSize: 12}}>Go</button>
+            </div>
           </div>
-          <button className="glass-btn" style={{padding: '6px 12px', fontSize: 12, opacity: 0.5}}>₹100</button>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+            <div style={{flex: 1, background: 'rgba(255,255,255,0.1)', height: 6, borderRadius: 3, overflow: 'hidden'}}>
+               <div style={{background: '#9c27b0', width: '55%', height: '100%'}}></div>
+            </div>
+            <span style={{color: '#888', fontSize: 10}}>55%</span>
+          </div>
         </div>
+
       </div>
     </div>
   );
